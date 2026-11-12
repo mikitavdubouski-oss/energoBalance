@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<!--
+  demo.html — «ярлык» для демо-режима.
+
+  Двойной клик по этому файлу открывает игру в демо-режиме (index.html?demo=1):
+  игра сама запускает уровень и решает несколько проблем — удобно для записи видео.
+  Обычный файл-ярлык Windows (.lnk / .url) хранит полный путь и ломается при переносе папки,
+  а этот файл работает из любой папки.
+
+  Как менять: чтобы демо начиналось с другого уровня, допиши в адрес ниже
+  &level=school или &level=city (например: index.html?demo=1&level=school).
+  Настройки демо (сколько проблем решить, темп) — блок demo в js/core/config.js.
+-->
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>ЭнергоБаланс — демо</title>
+  <!-- Мгновенный переход, даже если JavaScript отключён -->
+  <meta http-equiv="refresh" content="0; url=index.html?demo=1">
+  <script>
+    // replace — чтобы кнопка «Назад» в браузере не возвращала на этот пустой файл
+    window.location.replace('index.html?demo=1');
+  </script>
+</head>
+<body>
+  <a href="index.html?demo=1">ЭнергоБаланс — демо</a>
+</body>
+</html>

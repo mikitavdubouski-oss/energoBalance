@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<!--
+  index.html — точка входа игры «ЭнергоБаланс: Стратегия экономии».
+
+  Как запустить: двойной клик по этому файлу. Сервер и интернет не нужны.
+
+  Как менять:
+  - Экраны игры — это блоки <section id="screen-ИМЯ" class="screen">. Одновременно виден один.
+    Переключает их js/core/screens.js: EB.screens.show('ИМЯ').
+  - Тексты здесь НЕ пишем: у элементов стоит data-i18n="ключ",
+    а сами строки лежат в js/data/texts.ru.js и texts.be.js.
+  - Скрипты подключаются обычными <script src> (без type="module"),
+    ПОРЯДОК ВАЖЕН: сначала namespace.js и config.js, в самом конце main.js.
+-->
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>ЭнергоБаланс</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- ============ Загрузка игры ============ -->
+    <section id="screen-loading" class="screen is-active is-visible" aria-live="polite">
+      <div class="loading">
+        <div class="loading__spinner" aria-hidden="true"></div>
+        <p class="loading__text" data-i18n="loading">Загрузка…</p>
+      </div>
+    </section>
+
+    <!-- ============ Главное меню ============ -->
+    <section id="screen-menu" class="screen">
+      <div class="menu">
+        <!-- Логотип «Энергомарафона»: замени файл assets/logo/logo.svg на настоящий -->
+        <img class="menu__logo" src="assets/logo/logo.svg" data-i18n-alt="logoAlt" alt="">
+        <h1 class="menu__title" data-i18n="gameTitle"></h1>
+        <p class="menu__subtitle" data-i18n="gameSubtitle"></p>
+        <nav class="menu__buttons">
+          <button class="btn btn--primary" data-action="play" data-i18n="menu.play" data-autofocus></button>
+          <button class="btn btn--accent" data-action="continue" data-i18n="menu.continue" hidden></button>
+          <button class="btn" data-action="settings" data-i18n="menu.settings"></button>
+          <button class="btn" data-action="about" data-i18n="menu.about"></button>
+          <button class="btn btn--ghost" data-action="exit" data-i18n="menu.exit"></button>
+        </nav>
+        <p class="menu__coins" id="menu-coins"></p>
+      </div>
+    </section>
+
+    <!-- ============ Выбор уровня ============ -->
+    <section id="screen-levels" class="screen">
+      <div class="panel panel--wide">
+        <h2 class="panel__title" data-i18n="levels.title"></h2>
+        <div class="level-cards" id="level-cards"></div>
+        <button class="btn btn--ghost btn--small" data-action="back" data-i18n="common.back"></button>
+      </div>
+    </section>
+
+    <!-- ============ Настройки ============ -->
+    <section id="screen-settings" class="screen">
+      <div class="panel">
+        <h2 class="panel__title" data-i18n="settings.title"></h2>
+        <div class="settings" id="settings-list"></div>
+        <div class="panel__buttons">
+          <button class="btn btn--danger btn--small" data-action="reset-progress" data-i18n="settings.reset"></button>
+          <button class="btn btn--primary btn--small" data-action="back" data-i18n="common.back" data-autofocus></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Об игре ============ -->
+    <section id="screen-about" class="screen">
+      <div class="panel panel--wide panel--scroll">
+        <h2 class="panel__title" data-i18n="about.title"></h2>
+        <div class="about" id="about-content"></div>
+        <button class="btn btn--primary btn--small" data-action="back" data-i18n="common.back" data-autofocus></button>
+      </div>
+    </section>
+
+    <!-- ============ Загрузка уровня (с фактом) ============ -->
+    <section id="screen-intro" class="screen">
+      <div class="panel">
+        <p class="intro__level" id="intro-level"></p>
+        <h2 class="panel__title" id="intro-title"></h2>
+        <p class="intro__task" id="intro-task"></p>
+        <div class="fact-box" id="intro-fact"></div>
+        <div class="loading__spinner loading__spinner--small" id="intro-spinner" aria-hidden="true"></div>
+        <button class="btn btn--primary" id="intro-start" data-i18n="intro.start" hidden></button>
+      </div>
+    </section>
+
+    <!-- ============ Игра ============ -->
+    <section id="screen-game" class="screen screen--game">
+      <header class="hud" id="hud"></header>
+      <nav class="zone-tabs" id="zone-tabs" hidden></nav>
+      <div class="scene" id="scene"></div>
+
+      <!-- Советник -->
+      <div class="advisor" id="advisor" hidden>
+        <div class="advisor__bubble" id="advisor-bubble" aria-live="polite"></div>
+        <div class="advisor__figure" id="advisor-figure" aria-hidden="true"></div>
+      </div>
+
+      <!-- Карточка проблемы с действиями -->
+      <div class="layer" id="card-layer" hidden>
+        <div class="card" id="card" role="dialog" aria-modal="true"></div>
+      </div>
+
+      <!-- Мини-игра -->
+      <div class="layer layer--dark" id="minigame-layer" hidden>
+        <div class="minigame" id="minigame" role="dialog" aria-modal="true"></div>
+      </div>
+
+      <!-- Меню паузы -->
+      <div class="layer layer--dark" id="pause-layer" hidden>
+        <div class="panel" role="dialog" aria-modal="true">
+          <h2 class="panel__title" data-i18n="pause.title"></h2>
+          <div class="menu__buttons">
+            <button class="btn btn--primary" data-action="resume" data-i18n="pause.resume"></button>
+            <button class="btn" data-action="restart" data-i18n="pause.restart"></button>
+            <button class="btn" data-action="settings" data-i18n="menu.settings"></button>
+            <button class="btn btn--ghost" data-action="to-menu" data-i18n="pause.toMenu"></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Итоги уровня ============ -->
+    <section id="screen-results" class="screen">
+      <div class="panel panel--wide panel--scroll" id="results-content"></div>
+    </section>
+
+    <!-- ============ Финал ============ -->
+    <section id="screen-final" class="screen">
+      <div class="panel panel--wide" id="final-content"></div>
+    </section>
+
+    <!-- Общие слои поверх всего -->
+    <div class="layer layer--dark layer--top" id="modal-layer" hidden>
+      <div class="panel modal" id="modal" role="alertdialog" aria-modal="true"></div>
+    </div>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+    <div class="fx-layer" id="fx-layer" aria-hidden="true"></div>
+  </div>
+
+  <!-- ===== 1. Основа: пространство имён, настройки баланса, утилиты ===== -->
+  <script src="js/core/namespace.js"></script>
+  <script src="js/core/config.js"></script>
+  <script src="js/core/utils.js"></script>
+
+  <!-- ===== 2. Данные: тексты, факты, проблемы, отходы ===== -->
+  <script src="js/data/texts.ru.js"></script>
+  <script src="js/data/texts.be.js"></script>
+  <script src="js/data/facts.js"></script>
+  <script src="js/data/hotspots.js"></script>
+  <script src="js/data/waste.js"></script>
+
+  <!-- ===== 3. SVG-сцены ===== -->
+  <script src="js/scenes/apartment.scene.js"></script>
+  <script src="js/scenes/school.scene.js"></script>
+  <script src="js/scenes/city.scene.js"></script>
+
+  <!-- ===== 4. Ядро ===== -->
+  <script src="js/core/events.js"></script>
+  <script src="js/core/state.js"></script>
+  <script src="js/core/save.js"></script>
+  <script src="js/core/i18n.js"></script>
+  <script src="js/core/audio.js"></script>
+  <script src="js/core/voice.js"></script>
+  <script src="js/core/scoring.js"></script>
+  <script src="js/core/screens.js"></script>
+  <script src="js/core/game.js"></script>
+
+  <!-- ===== 5. Интерфейс ===== -->
+  <script src="js/ui/icons.js"></script>
+  <script src="js/ui/fx.js"></script>
+  <script src="js/ui/modals.js"></script>
+  <script src="js/ui/menu.js"></script>
+  <script src="js/ui/intro.js"></script>
+  <script src="js/ui/hud.js"></script>
+  <script src="js/ui/pause.js"></script>
+  <script src="js/ui/hints.js"></script>
+  <script src="js/ui/advisor.js"></script>
+  <script src="js/ui/results.js"></script>
+
+  <!-- ===== 6. Мини-игры ===== -->
+  <script src="js/minigames/thermostat.js"></script>
+  <script src="js/minigames/sorting.js"></script>
+  <script src="js/minigames/solar.js"></script>
+
+  <!-- ===== 7. Уровни ===== -->
+  <script src="js/levels/apartment.js"></script>
+  <script src="js/levels/school.js"></script>
+  <script src="js/levels/city.js"></script>
+
+  <!-- ===== 8. Демо-режим, отладка и запуск (всегда последними) ===== -->
+  <script src="js/core/demo.js"></script>
+  <script src="js/core/debug.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,894 @@
+/*
+  style.css — все стили игры «ЭнергоБаланс».
+
+  Как менять:
+  - Цвета, отступы, радиусы и размеры шрифта меняй ТОЛЬКО в блоке :root (дизайн-токены).
+    Остальные правила берут значения оттуда через var(--имя).
+  - Правила доступности: кнопки не меньше 48×48 px, текст не меньше 18 px,
+    смысл не передаём только красным/зелёным (добавляем иконку, форму или подпись),
+    у всех кнопок есть видимый фокус для клавиатуры.
+
+  Разделы: токены · база · экраны · кнопки · панели · меню · уровни · настройки ·
+  загрузка уровня и факты · игра (HUD, сцена, зоны) · Советник · слои и карточка ·
+  сообщения и эффекты · итоги и финал · мини-игры · демо · адаптивность.
+*/
+
+/* ===================== Дизайн-токены ===================== */
+:root {
+  /* Палитра: яркая и дружелюбная */
+  --color-bg:          #eaf6ff;  /* фон страницы — светлое небо */
+  --color-bg-accent:   #fff6d6;  /* второй цвет фона (градиент) */
+  --color-surface:     #ffffff;  /* карточки, панели */
+  --color-surface-alt: #f3f8fc;  /* вторичные блоки внутри панелей */
+  --color-text:        #1d2b3a;  /* основной текст (тёмно-синий), контраст на белом > 13:1 */
+  --color-text-muted:  #44546a;  /* второстепенный текст, контраст на белом > 7:1 */
+  --color-line:        #2b3a4a;  /* обводки в мультяшном стиле */
+  --color-primary:     #1f6fd1;  /* главные кнопки — синий (белый текст, контраст > 4.5:1) */
+  --color-primary-dark:#14529e;
+  --color-accent:      #ffb400;  /* энергия, монетки — жёлтый */
+  --color-good:        #166b49;  /* «правильно» — зелёный, ВСЕГДА вместе с иконкой-галочкой */
+  --color-bad:         #b8410a;  /* «ошибка» — тёмно-оранжевый, ВСЕГДА вместе с иконкой-треугольником */
+  --color-danger:      #b02a37;
+  --color-focus:       #7b3fe4;  /* обводка фокуса с клавиатуры — фиолетовый */
+  --color-shadow:      rgba(29, 43, 58, 0.18);
+  --color-overlay:     rgba(20, 32, 48, 0.55);
+
+  /* Цвета ресурсов и шкал */
+  --color-electricity: #f2a900;
+  --color-heat:        #e8662a;
+  --color-water:       #1e9cc4;
+  --color-waste:       #6c5ce7;
+  --color-consumption: #e8662a;
+  --color-budget:      #e0a100;
+  --color-comfort:     #2f8de4;
+
+  /* Отступы */
+  --space-xs: 4px;
+  --space-s:  8px;
+  --space-m:  16px;
+  --space-l:  24px;
+  --space-xl: 40px;
+
+  /* Радиусы скругления */
+  --radius-s:  8px;
+  --radius-m:  16px;
+  --radius-l:  28px;
+  --radius-round: 999px;
+
+  /* Шрифт: только системный стек, без загрузки из сети */
+  --font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-size-s:    18px;  /* минимум для читаемости */
+  --font-size-base: 18px;
+  --font-size-l:    22px;
+  --font-size-xl:   clamp(28px, 4vw, 44px);
+  --font-size-xxl:  clamp(36px, 6vw, 64px);
+
+  /* Размеры элементов управления */
+  --btn-min-size: 48px;    /* минимальная высота и ширина кнопки */
+  --btn-width:    min(340px, 80vw);
+  --hud-height:   auto;
+
+  /* Анимация */
+  --anim-fast: 150ms;
+  --anim-normal: 250ms;   /* должна совпадать с EB.config.fadeMs */
+}
+
+/* ===================== Базовые правила ===================== */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; height: 100%; }
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: 1.4;
+  color: var(--color-text);
+  background: linear-gradient(160deg, var(--color-bg) 0%, var(--color-bg-accent) 100%);
+  overflow: hidden;            /* игра занимает весь экран */
+  user-select: none;           /* не выделять текст при частых кликах */
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+
+h2, h3 { margin: 0; }
+h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
+
+[hidden] { display: none !important; }
+
+.muted { color: var(--color-text-muted); }
+
+.icon { width: 1.2em; height: 1.2em; flex: none; vertical-align: -0.2em; }
+
+/* Видимый фокус для всего, что можно выбрать клавишей Tab */
+:focus-visible { outline: 4px solid var(--color-focus); outline-offset: 3px; }
+
+/* ===================== Экраны ===================== */
+/* Все экраны лежат друг на друге, виден тот, у кого is-active; is-visible — плавное появление */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-l);
+  opacity: 0;
+  transition: opacity var(--anim-normal) ease;
+}
+.screen.is-active { display: flex; }
+.screen.is-visible { opacity: 1; }
+
+/* ===================== Кнопки ===================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-s);
+  min-width: var(--btn-min-size);
+  min-height: var(--btn-min-size);
+  width: var(--btn-width);
+  padding: var(--space-m) var(--space-l);
+  border: 3px solid var(--color-primary);
+  border-radius: var(--radius-round);
+  background: var(--color-surface);
+  color: var(--color-primary-dark);
+  font: inherit;
+  font-size: var(--font-size-l);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--color-shadow);
+  transition: transform var(--anim-fast), box-shadow var(--anim-fast), background var(--anim-fast);
+  touch-action: manipulation;  /* без задержки на касание */
+}
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--color-shadow); }
+.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.btn--primary { background: var(--color-primary); color: #fff; }
+.btn--primary:hover { background: var(--color-primary-dark); }
+.btn--accent { background: var(--color-accent); border-color: #b07d00; color: var(--color-text); }
+.btn--ghost { border-color: var(--color-text-muted); color: var(--color-text-muted); }
+.btn--danger { border-color: var(--color-danger); color: var(--color-danger); }
+.btn--small { width: auto; min-width: 140px; padding: var(--space-s) var(--space-l); font-size: var(--font-size-base); }
+.btn--lang.is-active { background: var(--color-primary); color: #fff; }
+
+/* Кнопка-действие в карточке проблемы: текст слева, во всю ширину */
+.btn--action {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+  border-radius: var(--radius-m);
+  font-size: var(--font-size-base);
+  padding: var(--space-m);
+}
+.btn--action.is-demo-press { background: var(--color-primary); color: #fff; }
+
+/* Круглая кнопка с иконкой (HUD) */
+.btn-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-width: 52px;
+  min-height: 52px;
+  padding: 0 var(--space-m);
+  border: 3px solid var(--color-line);
+  border-radius: var(--radius-round);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 700;
+  font-size: var(--font-size-l);
+  cursor: pointer;
+  box-shadow: 0 3px 0 var(--color-shadow);
+  touch-action: manipulation;
+}
+.btn-icon .icon { width: 26px; height: 26px; }
+.btn-icon:active { transform: translateY(2px); box-shadow: none; }
+.btn-icon--hint { background: #fff3c4; }
+.btn-icon--hint.is-empty { opacity: .55; }
+.btn-icon__label { font-size: var(--font-size-s); }
+.badge {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: var(--radius-round);
+  background: var(--color-line);
+  color: #fff;
+  font-size: 18px;
+  line-height: 28px;
+  text-align: center;
+}
+
+/* ===================== Панели ===================== */
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-m);
+  width: min(620px, 100%);
+  max-height: 100%;
+  padding: var(--space-l) var(--space-xl);
+  border: 4px solid var(--color-line);
+  border-radius: var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: 0 10px 0 var(--color-shadow);
+  text-align: center;
+}
+.panel--wide { width: min(960px, 100%); }
+.panel--scroll { overflow-y: auto; user-select: text; }
+.panel__title { font-size: var(--font-size-xl); color: var(--color-primary-dark); }
+.panel__buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-m); }
+
+/* ===================== Загрузка игры ===================== */
+.loading { display: flex; flex-direction: column; align-items: center; gap: var(--space-m); }
+.loading__spinner {
+  width: 64px;
+  height: 64px;
+  border: 8px solid var(--color-surface);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+.loading__spinner--small { width: 44px; height: 44px; border-width: 6px; border-color: var(--color-surface-alt); border-top-color: var(--color-accent); }
+.loading__text { margin: 0; font-size: var(--font-size-l); font-weight: 600; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===================== Главное меню ===================== */
+.menu { display: flex; flex-direction: column; align-items: center; gap: var(--space-m); text-align: center; }
+.menu__logo { width: 240px; height: 110px; object-fit: contain; }
+.menu__title { margin: 0; font-size: var(--font-size-xxl); color: var(--color-primary-dark); text-shadow: 0 4px 0 #fff; }
+.menu__subtitle { margin: 0 0 var(--space-s); font-size: var(--font-size-l); color: var(--color-text-muted); font-weight: 600; }
+.menu__buttons { display: flex; flex-direction: column; align-items: center; gap: var(--space-m); }
+.menu__coins { display: flex; align-items: center; gap: var(--space-s); margin: 0; min-height: 1.4em; font-weight: 600; }
+.icon--coin { color: var(--color-budget); }
+
+/* ===================== Выбор уровня ===================== */
+.level-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-m); width: 100%; }
+.level-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-s);
+  min-height: 260px;
+  padding: var(--space-l) var(--space-m);
+  border: 4px solid var(--color-line);
+  border-radius: var(--radius-l);
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+  box-shadow: 0 6px 0 var(--color-shadow);
+  transition: transform var(--anim-fast);
+}
+.level-card:hover { transform: translateY(-4px); }
+.level-card.is-locked { background: #e3e7ec; cursor: not-allowed; }
+.level-card.is-locked .level-card__icon { opacity: .35; }
+.level-card__num {
+  position: absolute; top: 10px; left: 14px;
+  font-weight: 800; font-size: var(--font-size-l); color: var(--color-text-muted);
+}
+.level-card__icon { width: 72px; height: 72px; color: var(--color-primary); }
+.level-card__name { font-size: var(--font-size-l); font-weight: 800; }
+.level-card__desc { color: var(--color-text-muted); }
+.level-card__stars .icon { width: 30px; height: 30px; color: var(--color-budget); }
+.level-card__lock { display: flex; align-items: center; gap: var(--space-s); font-weight: 700; color: var(--color-text-muted); }
+.level-card__best { font-weight: 600; }
+
+/* ===================== Настройки ===================== */
+.settings { display: flex; flex-direction: column; gap: var(--space-m); width: 100%; }
+.setting {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 64px;
+  align-items: center;
+  gap: var(--space-m);
+  text-align: left;
+}
+.setting__label { font-weight: 600; }
+.setting__value { font-weight: 700; text-align: right; }
+/* Пояснение под настройкой (например, какой голос найден) — на всю ширину строки */
+.setting__note { margin: -8px 0 0; color: var(--color-text-muted); text-align: left; }
+.setting__note.is-warn { padding: var(--space-s) var(--space-m); border: 2px dashed var(--color-bad); border-radius: var(--radius-s); background: #fff1e8; color: var(--color-text); }
+.setting__note.is-warn::before { content: "▲ "; color: var(--color-bad); }
+.setting .lang-switch { grid-column: 2 / 4; display: flex; gap: var(--space-s); }
+.setting .lang-switch .btn { flex: 1; min-width: 0; }
+
+/* Ползунок: крупный, удобный для пальца */
+.slider { width: 100%; height: 48px; accent-color: var(--color-primary); cursor: pointer; background: transparent; }
+
+/* ===================== Об игре ===================== */
+.about { width: 100%; text-align: left; }
+.about ul { margin: 0; padding-left: 1.2em; }
+.about li { margin: var(--space-xs) 0; }
+.about__lead { margin-top: 0; }
+
+/* ===================== Загрузка уровня и факты ===================== */
+.intro__level { margin: 0; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .08em; }
+.intro__task { margin: 0; font-size: var(--font-size-l); }
+.fact-box {
+  width: 100%;
+  padding: var(--space-m);
+  border: 3px dashed var(--color-accent);
+  border-radius: var(--radius-m);
+  background: #fffbea;
+  text-align: left;
+}
+.fact-box__head { display: flex; align-items: center; gap: var(--space-s); font-weight: 800; color: #8a5a00; }
+.fact-box p { margin: var(--space-s) 0 0; }
+
+/* ===================== Игровой экран ===================== */
+.screen--game {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+}
+
+/* --- HUD --- */
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-s) var(--space-m);
+  padding: var(--space-s) var(--space-m);
+  background: var(--color-surface);
+  border-bottom: 4px solid var(--color-line);
+  z-index: 2;
+}
+.hud__meters { display: flex; gap: var(--space-s); flex: 3 1 520px; }
+.hud__counters { display: flex; flex-wrap: wrap; gap: 2px var(--space-m); flex: 1 1 250px; font-size: var(--font-size-s); }
+.hud__buttons { display: flex; gap: var(--space-s); margin-left: auto; flex: none; }
+
+.meter {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  grid-template-areas: "icon label value status" "bar bar bar bar";
+  align-items: center;
+  gap: 2px var(--space-xs);
+  flex: 1;
+  min-width: 150px;
+  padding: 4px var(--space-s);
+  border: 3px solid transparent;
+  border-radius: var(--radius-s);
+}
+.meter__icon { grid-area: icon; display: flex; }
+.meter__icon .icon { width: 24px; height: 24px; }
+.meter__label { grid-area: label; font-weight: 700; display: flex; align-items: center; gap: 2px; white-space: nowrap; }
+.meter__hint .icon { width: 18px; height: 18px; }
+.meter__value { grid-area: value; font-weight: 800; font-size: var(--font-size-l); }
+.meter__status { grid-area: status; display: flex; }
+.meter__status .icon { width: 22px; height: 22px; }
+.meter__bar {
+  grid-area: bar;
+  height: 14px;
+  border: 2px solid var(--color-line);
+  border-radius: var(--radius-round);
+  background: #eef2f6;
+  overflow: hidden;
+}
+.meter__fill { display: block; height: 100%; transition: width .4s ease; }
+/* У каждой шкалы свой цвет И свой узор заливки — различимы и без цвета */
+.meter--consumption .meter__icon { color: var(--color-consumption); }
+.meter--consumption .meter__fill {
+  background: repeating-linear-gradient(45deg, var(--color-consumption) 0 8px, #f59a6a 8px 14px);
+}
+.meter--budget .meter__icon { color: var(--color-budget); }
+.meter--budget .meter__fill { background: var(--color-budget); }
+.meter--comfort .meter__icon { color: var(--color-comfort); }
+.meter--comfort .meter__fill {
+  background: radial-gradient(circle at 5px 5px, #8cc3f5 2.5px, var(--color-comfort) 3px) 0 0 / 10px 10px;
+}
+.meter[data-status="ok"] .meter__status { color: var(--color-good); }
+.meter[data-status="warn"] { border-color: var(--color-bad); border-style: dashed; background: #fff1e8; }
+.meter[data-status="warn"] .meter__status { color: var(--color-bad); animation: blink 1s ease-in-out infinite; }
+
+.counter { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.counter b { font-weight: 700; }
+.counter--kwh .icon { color: var(--color-electricity); }
+.counter--water .icon { color: var(--color-water); }
+.counter--heat .icon { color: var(--color-heat); }
+.counter--coins .icon { color: var(--color-budget); }
+.counter--timer.is-low { color: var(--color-bad); font-weight: 800; animation: blink 1s ease-in-out infinite; }
+.counter--solved .icon { color: var(--color-good); }
+
+@keyframes blink { 50% { opacity: .45; } }
+
+/* --- Вкладки зон (школа) --- */
+.zone-tabs {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-s);
+  padding: var(--space-s);
+  background: #d9ecfb;
+  border-bottom: 3px solid var(--color-line);
+}
+.zone-tab {
+  min-height: 48px;
+  min-width: 140px;
+  padding: 0 var(--space-l);
+  border: 3px solid var(--color-line);
+  border-radius: var(--radius-round);
+  background: var(--color-surface);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.zone-tab.is-active { background: var(--color-primary); color: #fff; }
+.zone-tab.is-active::before { content: "● "; }
+
+/* --- Сцена --- */
+.scene { position: relative; flex: 1; min-height: 0; background: #cfe6f7; }
+.zone { position: absolute; inset: 0; display: flex; }
+.scene-svg { width: 100%; height: 100%; display: block; }
+
+/* Состояния объектов: «проблема» и «в порядке» (см. контракт в js/scenes/*.scene.js) */
+.obj[data-state="problem"] .v-ok { display: none; }
+.obj[data-state="ok"] .v-problem { display: none; }
+.obj { cursor: pointer; outline: none; transform-box: fill-box; transform-origin: center; }
+.obj-hit { pointer-events: all; }
+.obj:hover, .obj:focus-visible { filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 3px var(--color-focus)); }
+.obj.is-hinted { animation: hint-glow .6s ease-in-out infinite alternate; }
+@keyframes hint-glow {
+  from { filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 8px var(--color-accent)); }
+  to   { filter: drop-shadow(0 0 10px #fff) drop-shadow(0 0 22px var(--color-accent)); }
+}
+
+/* ===================== Советник ===================== */
+.advisor {
+  position: absolute;
+  left: var(--space-m);
+  bottom: var(--space-m);
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-s);
+  max-width: min(560px, 70vw);
+  pointer-events: none;   /* не мешает кликать по сцене */
+  z-index: 3;
+}
+.advisor__figure {
+  order: -1;
+  width: 120px;
+  height: 150px;
+  flex: none;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.advisor__svg { width: 100%; height: 100%; filter: drop-shadow(0 4px 0 var(--color-shadow)); }
+.advisor__bubble {
+  position: relative;
+  margin-bottom: 70px;
+  padding: var(--space-m);
+  border: 3px solid var(--color-line);
+  border-radius: var(--radius-m);
+  background: var(--color-surface);
+  box-shadow: 0 4px 0 var(--color-shadow);
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity var(--anim-normal), transform var(--anim-normal);
+}
+.advisor__bubble::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  bottom: 18px;
+  border: 12px solid transparent;
+  border-right-color: var(--color-line);
+  border-left: 0;
+}
+.advisor__bubble.is-visible { opacity: 1; transform: none; }
+.fx-advisor .advisor__figure { animation: advisor-hop .5s ease; }
+@keyframes advisor-hop { 40% { transform: translateY(-14px); } }
+
+/* ===================== Слои: карточка, мини-игра, пауза, модальное окно ===================== */
+.layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-m);
+  background: rgba(20, 32, 48, 0.3);
+  z-index: 5;
+}
+.layer--dark { background: var(--color-overlay); z-index: 6; }
+.layer--top { position: fixed; z-index: 20; }
+.modal { width: min(520px, 100%); }
+.modal__text { margin: 0; font-size: var(--font-size-l); }
+
+/* --- Карточка проблемы --- */
+.card {
+  position: relative;
+  width: min(580px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: var(--space-l);
+  border: 4px solid var(--color-line);
+  border-radius: var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: 0 10px 0 var(--color-shadow);
+  animation: card-in var(--anim-normal) ease;
+}
+@keyframes card-in { from { transform: scale(.9); opacity: 0; } }
+.card__head {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 2px var(--space-m) 2px var(--space-s);
+  border: 2px solid var(--color-line);
+  border-radius: var(--radius-round);
+  font-weight: 700;
+  font-size: var(--font-size-s);
+}
+.card__head--electricity { background: #fff0bf; }
+.card__head--electricity .icon { color: #b07d00; }
+.card__head--heat { background: #ffe1d1; }
+.card__head--heat .icon { color: var(--color-heat); }
+.card__head--water { background: #d4f1fb; }
+.card__head--water .icon { color: var(--color-water); }
+.card__head--waste { background: #e7e3ff; }
+.card__head--waste .icon { color: var(--color-waste); }
+.card__title { margin: var(--space-s) 0; font-size: var(--font-size-xl); color: var(--color-primary-dark); padding-right: 48px; }
+.card__text { margin: 0 0 var(--space-m); font-size: var(--font-size-l); }
+.card__actions { display: flex; flex-direction: column; gap: var(--space-s); }
+.card__close {
+  position: absolute;
+  top: var(--space-s);
+  right: var(--space-s);
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  cursor: pointer;
+}
+.card__close .icon { width: 26px; height: 26px; }
+
+/* Вердикт: иконка + текст + цвет (смысл не только в цвете) */
+.verdict {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  margin-bottom: var(--space-s);
+  padding: var(--space-s) var(--space-m);
+  border-radius: var(--radius-m);
+  font-weight: 800;
+  font-size: var(--font-size-l);
+}
+.verdict .icon { width: 32px; height: 32px; }
+.verdict--good { background: #dcf5e9; color: var(--color-good); border: 3px solid var(--color-good); }
+.verdict--bad { background: #ffe9dc; color: var(--color-bad); border: 3px dashed var(--color-bad); }
+
+/* ===================== Сообщения и эффекты ===================== */
+.toasts { position: fixed; top: 110px; left: 50%; transform: translateX(-50%); z-index: 30; pointer-events: none; }
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  margin-bottom: var(--space-s);
+  padding: var(--space-s) var(--space-m);
+  border: 3px solid var(--color-line);
+  border-radius: var(--radius-round);
+  background: var(--color-surface);
+  box-shadow: 0 4px 0 var(--color-shadow);
+  font-weight: 700;
+  white-space: nowrap;
+  animation: toast-in var(--anim-normal) ease;
+  transition: opacity .4s;
+}
+.toast--near { position: fixed; transform: translate(-50%, -100%); }
+.toast--ok .icon { color: var(--color-good); }
+.toast--warn .icon { color: var(--color-bad); }
+.toast.is-leaving { opacity: 0; }
+@keyframes toast-in { from { opacity: 0; } }
+
+.fx-layer { position: fixed; inset: 0; pointer-events: none; z-index: 25; }
+.fx-float {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  padding: 2px 14px;
+  border: 3px solid var(--color-line);
+  border-radius: var(--radius-round);
+  font-weight: 800;
+  font-size: 26px;
+  animation: float-up 1.4s ease-out forwards;
+}
+.fx-float--good { background: #dcf5e9; color: var(--color-good); }
+.fx-float--bad { background: #ffe9dc; color: var(--color-bad); }
+@keyframes float-up { to { transform: translate(-50%, -160%); opacity: 0; } }
+
+.fx-pop { animation: pop .7s ease; }
+@keyframes pop { 30% { transform: scale(1.12); } 60% { transform: scale(.96); } }
+.fx-shake { animation: shake .6s ease; }
+@keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+
+/* ===================== Итоги и финал ===================== */
+.stars { display: flex; align-items: center; justify-content: center; gap: var(--space-s); }
+.stars .icon { width: 56px; height: 56px; color: #9aa6b2; }
+.stars .icon.is-on { color: var(--color-budget); filter: drop-shadow(0 3px 0 var(--color-shadow)); }
+.stars__text { font-weight: 700; margin-left: var(--space-s); }
+.icon--star.is-on { color: var(--color-budget); }
+
+.results__numbers { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-m); }
+.big-number {
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  padding: var(--space-s) var(--space-m);
+  border: 3px solid var(--color-line);
+  border-radius: var(--radius-m);
+  background: var(--color-surface-alt);
+}
+.big-number span { color: var(--color-text-muted); font-weight: 600; }
+.big-number b { font-size: 34px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.big-number--coins .icon { color: var(--color-budget); }
+.results__formula { margin: 0; color: var(--color-text-muted); }
+.results__summary { margin: 0; font-size: var(--font-size-l); font-weight: 700; }
+.results__cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-l); width: 100%; text-align: left; }
+.results__cols h3 { margin-top: 0; }
+#screen-results .panel { gap: var(--space-s); }
+#screen-results .stars .icon { width: 44px; height: 44px; }
+#screen-results .big-number b { font-size: 28px; }
+
+.res-list, .tips { list-style: none; margin: 0; padding: 0; width: 100%; text-align: left; }
+.res-row {
+  display: grid;
+  grid-template-columns: 32px 9em 1fr 4em;
+  align-items: center;
+  gap: var(--space-s);
+  margin: var(--space-xs) 0;
+}
+.res-row .icon { width: 28px; height: 28px; }
+.res-row--electricity .icon { color: var(--color-electricity); }
+.res-row--heat .icon { color: var(--color-heat); }
+.res-row--water .icon { color: var(--color-water); }
+.res-row--waste .icon { color: var(--color-waste); }
+.res-row__bar { height: 18px; border: 2px solid var(--color-line); border-radius: var(--radius-round); background: #eef2f6; overflow: hidden; }
+.res-row__bar span { display: block; height: 100%; background: var(--color-good); }
+.res-row__pct { text-align: right; font-size: var(--font-size-l); }
+.tips li {
+  position: relative;
+  margin: var(--space-s) 0;
+  padding: var(--space-s) var(--space-m) var(--space-s) 44px;
+  border-radius: var(--radius-m);
+  background: #fffbea;
+}
+.tips li::before { content: "💡"; position: absolute; left: 12px; top: 8px; }
+
+.final__badge {
+  display: flex; align-items: center; justify-content: center;
+  width: 96px; height: 96px;
+  border: 4px solid var(--color-line);
+  border-radius: 50%;
+  background: #dcf5e9;
+  color: var(--color-good);
+}
+.final__badge .icon { width: 56px; height: 56px; }
+.final__rank-label { margin: 0; color: var(--color-text-muted); font-weight: 600; }
+.final__rank { margin: 0; font-size: var(--font-size-xl); font-weight: 800; color: var(--color-primary-dark); }
+.final__thanks { margin: 0; font-size: var(--font-size-l); }
+
+/* ===================== Мини-игры: общее ===================== */
+.minigame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-m);
+  width: min(1000px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: var(--space-l);
+  border: 4px solid var(--color-line);
+  border-radius: var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: 0 10px 0 var(--color-shadow);
+  text-align: center;
+}
+.minigame__title { font-size: var(--font-size-xl); color: var(--color-primary-dark); }
+.minigame__step { margin: 0; font-weight: 700; color: var(--color-text-muted); }
+.minigame__text { margin: 0; font-size: var(--font-size-l); max-width: 760px; }
+.minigame__feedback { margin: 0; min-height: 1.4em; font-weight: 700; font-size: var(--font-size-l); }
+.minigame__feedback.is-good { color: var(--color-good); }
+.minigame__feedback.is-good::before { content: "✔ "; }
+.minigame__feedback.is-bad { color: var(--color-bad); }
+.minigame__feedback.is-bad::before { content: "▲ "; }
+
+/* --- Термостат --- */
+.thermo { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--space-l); width: 100%; }
+.thermo__situation { text-align: left; }
+.thermo__situation b { display: block; font-size: var(--font-size-l); color: var(--color-primary-dark); }
+.thermo__situation p { margin: var(--space-s) 0 0; }
+.thermo__dial-wrap { display: flex; flex-direction: column; align-items: center; gap: var(--space-s); }
+.thermo__dial { width: min(300px, 40vh); height: min(300px, 40vh); touch-action: none; cursor: grab; }
+.thermo__dial:active { cursor: grabbing; }
+.thermo__buttons { display: flex; gap: var(--space-m); }
+.thermo__buttons .btn-icon { font-size: 30px; min-width: 64px; }
+.thermo__bars { display: flex; flex-direction: column; gap: var(--space-m); text-align: left; }
+.mini-meter { display: grid; grid-template-columns: 1fr 50px; gap: 4px var(--space-s); align-items: center; }
+.mini-meter > span:first-child { grid-column: 1 / 3; display: flex; align-items: center; gap: 6px; font-weight: 700; }
+.mini-meter__bar { height: 18px; border: 2px solid var(--color-line); border-radius: var(--radius-round); background: #eef2f6; overflow: hidden; }
+.mini-meter__bar span { display: block; height: 100%; transition: width .2s; }
+.mini-meter--comfort .icon { color: var(--color-comfort); }
+.mini-meter--comfort .mini-meter__bar span { background: radial-gradient(circle at 5px 5px, #8cc3f5 2.5px, var(--color-comfort) 3px) 0 0 / 10px 10px; }
+.mini-meter--heat .icon { color: var(--color-heat); }
+.mini-meter--heat .mini-meter__bar span { background: repeating-linear-gradient(45deg, var(--color-heat) 0 8px, #f59a6a 8px 14px); }
+.mini-meter b { text-align: right; }
+
+/* --- Сортировка --- */
+.sort__top { display: flex; align-items: center; gap: var(--space-l); width: 100%; justify-content: center; }
+.sort__stat { display: inline-flex; align-items: center; gap: 6px; font-size: var(--font-size-l); }
+.sort__field {
+  position: relative;
+  width: 100%;
+  height: min(42vh, 360px);
+  border: 3px dashed #9fb3c8;
+  border-radius: var(--radius-m);
+  background: linear-gradient(#f3f8fc, #e2eef8);
+  overflow: hidden;
+}
+.waste-item {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 52px;
+  padding: 4px 12px 4px 6px;
+  border: 3px solid var(--color-line);
+  border-radius: var(--radius-round);
+  background: var(--color-surface);
+  font: inherit;
+  font-weight: 600;
+  cursor: grab;
+  touch-action: none;
+  box-shadow: 0 3px 0 var(--color-shadow);
+  z-index: 1;
+}
+.waste-item__icon { font-size: 30px; line-height: 1; }
+.waste-item.is-dragging { cursor: grabbing; z-index: 3; transform: scale(1.08); }
+.waste-item.is-selected { outline: 4px solid var(--color-focus); outline-offset: 2px; }
+.sort__bins { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space-s); width: 100%; }
+.bin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 96px;
+  padding: var(--space-s) 4px;
+  border: 3px solid var(--color-line);
+  border-top: 12px solid var(--bin-color);
+  border-radius: 6px 6px var(--radius-m) var(--radius-m);
+  background: #fff; /* запасной вариант для старых браузеров */
+  background: color-mix(in srgb, var(--bin-color) 18%, #fff);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.bin__icon { font-size: 34px; line-height: 1; }
+.bin__icon img, .waste-item__icon img { width: 36px; height: 36px; display: block; pointer-events: none; }
+.bin__label { font-size: 18px; }
+.bin.is-over { transform: scale(1.08); box-shadow: 0 0 0 4px var(--color-focus); }
+.sort__summary { list-style: none; margin: 0; padding: 0; font-size: var(--font-size-l); }
+.sort__summary li { display: flex; align-items: center; gap: var(--space-s); margin: var(--space-xs) 0; }
+.sort__summary li:nth-child(1) .icon { color: var(--color-good); }
+.sort__summary li:nth-child(2) .icon { color: var(--color-bad); }
+
+/* --- Солнечная электростанция --- */
+.solar-board { position: relative; width: min(760px, 100%); aspect-ratio: 760 / 340; }
+.solar-board__bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.solar-slot {
+  position: absolute;
+  width: 9.5%;
+  aspect-ratio: 1;
+  min-width: 52px;
+  min-height: 52px;
+  border: 3px dashed var(--color-text-muted);
+  border-radius: var(--radius-s);
+  background: rgba(255, 255, 255, .85);
+  font: inherit;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.solar-slot.is-filled { border-style: solid; border-color: var(--color-line); background: #fff; }
+.solar-slot svg { width: 100%; height: 100%; }
+.solar-parts { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-s); }
+.solar-part {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 110px;
+  min-height: 96px;
+  padding: var(--space-s);
+  border: 3px solid var(--color-line);
+  border-radius: var(--radius-m);
+  background: var(--color-surface-alt);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.solar-part svg { width: 48px; height: 48px; }
+.solar-part.is-selected { outline: 4px solid var(--color-focus); background: #efe7ff; }
+.solar-part:disabled { opacity: .4; cursor: default; }
+.solar-choice { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-m); font-weight: 700; }
+.solar-choice .slider { width: 220px; }
+.compass { display: flex; flex-wrap: wrap; gap: var(--space-s); }
+.solar-angle-pic { width: 100px; height: 60px; }
+.solar-flow { animation: flow 0.8s linear infinite; }
+.solar-rays path { animation: flow 0.8s linear infinite; }
+.solar-board.is-running .solar-window { fill: #ffe066; transition: fill 1.2s 1s; }
+@keyframes flow { to { stroke-dashoffset: -26; } }
+
+/* ===================== Демо-режим ===================== */
+.demo-banner {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  padding: 4px 12px;
+  border-radius: var(--radius-round);
+  background: rgba(29, 43, 58, .7);
+  color: #fff;
+  font-size: 18px;
+  z-index: 40;
+  pointer-events: none;
+}
+
+/* ===================== Адаптивность ===================== */
+/* Низкие экраны (1366×768 с панелью браузера): сжимаем отступы */
+@media (max-height: 800px) {
+  .screen { padding: var(--space-m); }
+  .menu, .menu__buttons, .panel { gap: var(--space-s); }
+  .menu__logo { height: 80px; }
+  .btn { padding: var(--space-s) var(--space-l); }
+  .panel { padding: var(--space-m) var(--space-l); }
+  .level-card { min-height: 220px; }
+  .advisor__figure { width: 96px; height: 120px; }
+  .advisor__bubble { margin-bottom: 50px; }
+  .hud { padding: 4px var(--space-m); }
+  .card { padding: var(--space-m); }
+  .minigame { padding: var(--space-m); gap: var(--space-s); }
+}
+
+/* Ноутбуки: у кнопки подсказки остаются иконка и число (подпись — в aria-label) */
+@media (max-width: 1600px) {
+  .btn-icon__label { display: none; }
+  .meter { min-width: 140px; }
+}
+
+/* Узкие экраны: уровни и мини-игры в столбик */
+@media (max-width: 900px) {
+  .results__cols { grid-template-columns: 1fr; }
+  .level-cards { grid-template-columns: 1fr; }
+  .level-card { min-height: 0; }
+  .thermo { grid-template-columns: 1fr; }
+  .sort__bins { grid-template-columns: repeat(4, 1fr); }
+  .setting { grid-template-columns: 1fr; text-align: center; }
+  .setting .lang-switch { grid-column: auto; }
+  .res-row { grid-template-columns: 28px 1fr 1fr 56px; }
+}
+
+/* Большие интерактивные панели: всё крупнее */
+@media (min-width: 1800px) {
+  :root {
+    --font-size-base: 22px;
+    --font-size-s: 20px;
+    --font-size-l: 28px;
+    --btn-width: 420px;
+  }
+  .btn-icon { min-width: 64px; min-height: 64px; }
+  .advisor__figure { width: 150px; height: 190px; }
+}
+
+/* Если пользователь просил меньше анимации — уважаем это */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
