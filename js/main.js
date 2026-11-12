@@ -17,6 +17,7 @@
     EB.i18n.setLang(EB.save.getSetting('lang'));
 
     EB.ui.menu.init();
+    EB.ui.fullscreen.init();
     EB.ui.levelIntro.init();
     EB.ui.pause.init();
     EB.ui.hints.init();

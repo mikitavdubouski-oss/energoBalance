@@ -70,6 +70,7 @@
 | 12 | **Медали в финале** по эко-коинам за игру: золото (1 место) от 170, серебро (2) от 115, бронза (3) — всем, кто дошёл до финала | прогон 8 уровней: идеальная игра ≈ 224 монеты; уточнить после теста с учениками | `medals` в [config.js](js/core/config.js) |
 | 13 | **Сортировка:** лёгкий 10 предметов, очки ×0,6; средний 16, ×0,8; сложный 22, ×1 (скорость как была) | по заданию 12.11.2026 | `minigames.sorting.levels` в [config.js](js/core/config.js) |
 | 11 | Демо-режим **не сохраняет прогресс** | чтобы запись видео не портила сохранение игрока | [js/core/demo.js](js/core/demo.js) |
+| 17 | **Кнопка «На весь экран»** (меню и пауза); на Android ещё и фиксирует горизонтальную ориентацию; на iPhone — подсказка «На экран „Домой“». Значок игры и manifest.webmanifest для установки как приложение | браузеры разрешают полный экран только по нажатию; Apple не даёт его сайтам на iPhone | [js/ui/fullscreen.js](js/ui/fullscreen.js), [assets/icons/](assets/icons/), [manifest.webmanifest](manifest.webmanifest) |
 | 16 | **Мини-игр 7** (12.11.2026): добавлены тепловизор (больница), вечерний обход (офис), трубопровод (завод и агрогородок), энергоэтикетка (агрогородок); у сортировки — наборы предметов по уровням, у термостата — свои ситуации в агрогородке. Все цифры в мини-играх — условные | чтобы на каждом уровне, кроме колледжа и квартиры, было что-то новое | `minigames` в [config.js](js/core/config.js), [js/minigames/](js/minigames/), `sets` в [waste.js](js/data/waste.js) |
 | 14 | **5 новых уровней** (12.11.2026) стоят между колледжем и мини-городом; на каждом одна зона, 11 проблем. Мини-игры: термостат — в доме в агрогородке, сортировка — в супермаркете | город с ВИЭ остаётся финалом | `levelOrder`, `levels` в [config.js](js/core/config.js), [js/levels/](js/levels/) |
 | 15 | Список `voiceNotRecorded` — для будущих реплик без записи (сейчас пуст: всё записано) | чтобы не было ошибок «файл не найден» | `voiceNotRecorded` в [config.js](js/core/config.js), [docs/voice-lines.md](docs/voice-lines.md) |
@@ -103,7 +104,7 @@
 | [js/core/audio.js](js/core/audio.js) · [voice.js](js/core/voice.js) | звук, музыка, голос Советника |
 | [js/core/screens.js](js/core/screens.js) | переключение экранов |
 | [js/core/demo.js](js/core/demo.js) · [debug.js](js/core/debug.js) · [utils.js](js/core/utils.js) | демо-режим, отладка, утилиты |
-| [js/ui/](js/ui/) | `menu` (меню, уровни, настройки, «Об игре»), `intro` (загрузка уровня), `hud`, `pause`, `hints`, `modals` (карточка, окна), `advisor` (Советник), `results` (итоги, финал), `icons`, `fx` |
+| [js/ui/](js/ui/) | `menu` (меню, уровни, настройки, «Об игре»), `fullscreen` (кнопка «На весь экран», подсказка для iPhone), `intro` (загрузка уровня), `hud`, `pause`, `hints`, `modals` (карточка, окна), `advisor` (Советник), `results` (итоги, финал), `icons`, `fx` |
 | [js/minigames/](js/minigames/) | `thermostat.js`, `sorting.js`, `solar.js` |
 | [js/levels/](js/levels/) | описание уровней: зоны и сцены |
 | [js/scenes/](js/scenes/) | SVG-сцены: квартира, колледж (3 зоны, файл school.scene.js), дом в агрогородке (agro), супермаркет (shop), офис (office), больница (hospital), завод (factory), город (city) |

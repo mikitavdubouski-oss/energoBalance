@@ -17,6 +17,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>ЭнергоБаланс</title>
+  <!-- Игра как приложение на главном экране телефона (без панелей браузера). Подробнее — js/ui/fullscreen.js -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="ЭнергоБаланс">
+  <meta name="theme-color" content="#1f6fd1">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
+  <link rel="apple-touch-icon" href="assets/icons/icon-180.png">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -42,7 +50,9 @@
           <button class="btn btn--accent" data-action="continue" data-i18n="menu.continue" hidden></button>
           <button class="btn" data-action="settings" data-i18n="menu.settings"></button>
           <button class="btn" data-action="about" data-i18n="menu.about"></button>
+          <button class="btn btn--ghost" data-action="fullscreen" hidden></button>
         </nav>
+        <p class="menu__hint muted" id="fullscreen-hint" hidden></p>
         <p class="menu__coins" id="menu-coins"></p>
       </div>
     </section>
@@ -125,6 +135,7 @@
             <button class="btn btn--primary" data-action="resume" data-i18n="pause.resume"></button>
             <button class="btn" data-action="restart" data-i18n="pause.restart"></button>
             <button class="btn" data-action="settings" data-i18n="menu.settings"></button>
+            <button class="btn" data-action="fullscreen" hidden></button>
             <button class="btn btn--ghost" data-action="to-menu" data-i18n="pause.toMenu"></button>
           </div>
         </div>
@@ -193,6 +204,7 @@
   <script src="js/ui/hints.js"></script>
   <script src="js/ui/advisor.js"></script>
   <script src="js/ui/results.js"></script>
+  <script src="js/ui/fullscreen.js"></script>
 
   <!-- ===== 6. Мини-игры ===== -->
   <script src="js/minigames/thermostat.js"></script>

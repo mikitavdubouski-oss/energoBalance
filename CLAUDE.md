@@ -61,6 +61,7 @@
 energobalans/  (сейчас папка «energo Tat»)
 ├── index.html              # точка входа, подключает все скрипты по порядку
 ├── demo.html               # «ярлык» демо-режима → index.html?demo=1
+├── manifest.webmanifest    # игра как приложение на Android (подключается только по http(s), см. js/ui/fullscreen.js)
 ├── README.txt              # инструкция для жюри
 ├── PROJECT-MAP.md          # карта проекта: что где лежит, что ждёт решения
 ├── css/
@@ -82,7 +83,8 @@ energobalans/  (сейчас папка «energo Tat»)
 │   │   ├── demo.js         # демо-режим ?demo=1
 │   │   └── debug.js        # отладка EB.debug.* (только при config.debug = true)
 │   ├── ui/                 # icons, fx, modals (карточка, окна, слой мини-игры), menu, intro,
-│   │                       # hud, pause, hints (клики по сцене), advisor (Советник), results (итоги, финал)
+│   │                       # hud, pause, hints (клики по сцене), advisor (Советник), results (итоги, финал),
+│   │                       # fullscreen (кнопка «На весь экран», подсказка для iPhone)
 │   ├── scenes/             # SVG-сцены строками: apartment, school (колледж, 3 зоны), agro, shop, office, hospital, factory, city
 │   ├── levels/             # по файлу на уровень (apartment, school, agro, shop, office, hospital, factory, city) — только описание
 │   ├── minigames/          # thermostat, sorting, solar, thermal (тепловизор), evening (вечерний обход), pipes, label
@@ -90,6 +92,7 @@ energobalans/  (сейчас папка «energo Tat»)
 │   └── main.js             # запуск
 ├── assets/                 # необязательные файлы-замены; список имён — assets/README.md
 │   ├── logo/logo.svg       # заглушка логотипа «Энергомарафона» (предоставит педагог)
+│   ├── icons/              # значок игры: icon.svg и PNG 180/192/512 (главный экран телефона, вкладка браузера)
 │   ├── audio/{sfx,music,voice,voice/be}/
 │   └── svg/{waste}/
 └── docs/                   # записка, инструкции, чек-листы, списки на проверку,
@@ -113,6 +116,8 @@ energobalans/  (сейчас папка «energo Tat»)
   У новых уровней префиксы id: agro-, shop-, office-, hosp-, fac- (объекты, проблемы, факты), чтобы ключи текстов не пересекались.
 - **Финал:** медаль по эко-коинам — 1, 2 или 3 место (пороги medals в config.js) с похвалой; плюс звание по звёздам.
 - **Сортировка отходов:** 3 уровня сложности на выбор, на лёгком очков меньше (множитель points).
+- **Полный экран:** кнопка «На весь экран» (меню и пауза) — Fullscreen API по нажатию, на Android ещё и фиксирует
+  горизонтальную ориентацию. На iPhone API нет — вместо кнопки подсказка «Поделиться → На экран „Домой“».
 - **Телефон вертикально:** в игре показывается «Поверни телефон» и ставится пауза; меню и итоги работают и вертикально.
 
 ## Правила кода

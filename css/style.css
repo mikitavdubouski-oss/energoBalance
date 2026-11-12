@@ -248,6 +248,7 @@ h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
 .menu__title { margin: 0; font-size: var(--font-size-xxl); color: var(--color-primary-dark); text-shadow: 0 4px 0 #fff; }
 .menu__subtitle { margin: 0 0 var(--space-s); font-size: var(--font-size-l); color: var(--color-text-muted); font-weight: 600; }
 .menu__buttons { display: flex; flex-direction: column; align-items: center; gap: var(--space-m); }
+.menu__hint { margin: 0; max-width: 520px; text-align: center; font-size: var(--font-size-s); }
 .menu__coins { display: flex; align-items: center; gap: var(--space-s); margin: 0; min-height: 1.4em; font-weight: 600; }
 .icon--coin { color: var(--color-budget); }
 

@@ -13,7 +13,7 @@
 ## Что входит в архив
 
 ```
-index.html  demo.html  README.txt  css/  js/  assets/  docs/
+index.html  demo.html  manifest.webmanifest  README.txt  css/  js/  assets/  docs/
 ```
 
 Не входят служебные файлы разработки: `CLAUDE.md`, `PROJECT-MAP.md`, `docs/PROMPTS.md`, папки `.git`, `.claude`.
@@ -29,7 +29,7 @@ index.html  demo.html  README.txt  css/  js/  assets/  docs/
 $out = "$env:TEMP\energobalans"
 Remove-Item $out -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory $out | Out-Null
-Copy-Item index.html, demo.html, README.txt, css, js, assets, docs -Destination $out -Recurse
+Copy-Item index.html, demo.html, manifest.webmanifest, README.txt, css, js, assets, docs -Destination $out -Recurse
 # 2. Убираем служебные файлы разработки
 Remove-Item "$out\docs\PROMPTS.md"
 # 3. Упаковываем

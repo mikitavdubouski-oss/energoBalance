@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Значок игры «ЭнергоБаланс» для главного экрана телефона: молния и листок на синем фоне.
+       Важные детали — в центральном круге (≈ 80 % размера), чтобы Android мог обрезать края («maskable»). -->
+  <defs>
+    <linearGradient id="ic-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d8ef0"/><stop offset="1" stop-color="#1557b0"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#ic-bg)"/>
+  <circle cx="256" cy="256" r="168" fill="#eaf6ff" stroke="#2b3a4a" stroke-width="12"/>
+  <!-- листок справа внизу -->
+  <path d="M282 352c0-74 38-120 108-126 4 72-36 120-108 126z" fill="#3fb58a" stroke="#2b3a4a" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M300 334c20-30 42-52 70-70" fill="none" stroke="#2b3a4a" stroke-width="8" stroke-linecap="round"/>
+  <!-- молния -->
+  <path d="M240 120 160 268h60l-24 124 96-160h-62l36-112z" fill="#ffd23f" stroke="#2b3a4a" stroke-width="12" stroke-linejoin="round"/>
+</svg>
