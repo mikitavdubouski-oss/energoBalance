@@ -127,7 +127,8 @@ EB.config = {
 
   // ---------- Голос Советника ----------
   // true — сначала пытаться играть файл assets/audio/voice/<id>.mp3, если его нет — синтез речи
-  voiceFiles: false,
+  // Записанные реплики лежат в assets/audio/voice/ (RU) и assets/audio/voice/be/ (BE), список — docs/voice-lines.md
+  voiceFiles: true,
   speechRate: 1.0,
   speechDelayMs: 80,            // пауза перед синтезом речи (обход ошибки Chrome после cancel)
   advisorBubbleMs: 6000,        // сколько висит облачко реплики
