@@ -1,12 +1,19 @@
 /*
   save.js — сохранение прогресса и настроек в localStorage браузера.
 
+  Каждое открытие игры — НОВЫЙ ИГРОК (новая сессия): эко-коины, звёзды и открытые уровни
+  обнуляются, начинать нужно с квартиры. Так честно для соревнования в классе.
+  Постоянно хранятся только рекорды уровней и настройки.
+
   Что сохраняем (EB.save.data):
-  - progress.unlocked — открытые уровни, например ['apartment', 'school'];
-  - progress.best     — лучшие очки по уровням {apartment: 230};
-  - progress.stars    — лучшие звёзды по уровням {apartment: 2};
-  - progress.ecoCoins — всего эко-коинов;
-  - settings          — звук, музыка, голос, язык (см. EB.config.defaultSettings).
+  - progress.unlocked   — открытые в этой сессии уровни, например ['apartment', 'school'];
+  - progress.stars      — лучшие звёзды по уровням в этой сессии {apartment: 2};
+  - progress.levelCoins — лучшие эко-коины по уровням в этой сессии {apartment: 17};
+  - progress.ecoCoins   — эко-коины игрока за сессию (сумма levelCoins: переигрывание уровня
+                          не накручивает монеты, в зачёт идёт лучший результат уровня);
+  - progress.levelScores — лучшие очки по уровням в этой сессии (общий счёт в финале);
+  - progress.best       — рекорды очков по уровням за всё время (не обнуляются при открытии);
+  - settings            — звук, музыка, голос, язык (см. EB.config.defaultSettings).
 
   Когда сохраняем: при завершении уровня и при смене настроек (автоматически).
   Если localStorage недоступен (приватный режим, запрет браузера) — игра просто
@@ -28,6 +35,8 @@ EB.save = {
         unlocked: [EB.config.levelOrder[0]],
         best: {},
         stars: {},
+        levelCoins: {},
+        levelScores: {},
         ecoCoins: 0
       },
       settings: Object.assign({}, EB.config.defaultSettings)
@@ -63,7 +72,20 @@ EB.save = {
       }
     }
     EB.save.data = data;
+    EB.save.newSession();
     return data;
+  },
+
+  // Новая сессия (новый игрок): обнуляем монеты, звёзды и открытые уровни. Рекорды и настройки остаются.
+  newSession: function () {
+    var p = EB.save.data.progress;
+    var fresh = EB.save._defaults().progress;
+    p.unlocked = fresh.unlocked;
+    p.stars = fresh.stars;
+    p.levelCoins = fresh.levelCoins;
+    p.levelScores = fresh.levelScores;
+    p.ecoCoins = 0;
+    EB.save.write();
   },
 
   write: function () {
@@ -77,9 +99,9 @@ EB.save = {
     }
   },
 
-  // Есть ли что продолжать: пройден хотя бы один уровень
+  // Есть ли что продолжать: в этой сессии пройден хотя бы один уровень
   hasProgress: function () {
-    return Object.keys(EB.save.data.progress.best).length > 0;
+    return Object.keys(EB.save.data.progress.stars).length > 0;
   },
 
   isUnlocked: function (levelId) {
@@ -91,7 +113,14 @@ EB.save = {
     var p = EB.save.data.progress;
     if (!p.best[levelId] || result.score > p.best[levelId]) p.best[levelId] = result.score;
     if (!p.stars[levelId] || result.stars > p.stars[levelId]) p.stars[levelId] = result.stars;
-    p.ecoCoins += result.coins;
+    // Эко-коины: за уровень засчитывается лучший результат этой сессии
+    var before = p.ecoCoins;
+    if (!p.levelCoins[levelId] || result.coins > p.levelCoins[levelId]) p.levelCoins[levelId] = result.coins;
+    p.ecoCoins = Object.keys(p.levelCoins).reduce(function (sum, id) { return sum + p.levelCoins[id]; }, 0);
+    result.coinsAdded = p.ecoCoins - before;   // сколько монет реально прибавилось к сумме
+    result.coinsTotal = p.ecoCoins;
+    // Лучшие очки уровня в этой сессии (для общего счёта в финале)
+    if (!p.levelScores[levelId] || result.score > p.levelScores[levelId]) p.levelScores[levelId] = result.score;
     var next = EB.save.nextLevel(levelId);
     if (next && result.stars > 0 && p.unlocked.indexOf(next) === -1) p.unlocked.push(next);
     EB.save.write();
@@ -129,7 +158,7 @@ EB.save = {
     return EB.save.data.settings[name];
   },
 
-  // Сбросить прогресс (настройки оставляем)
+  // Сбросить прогресс и рекорды (настройки оставляем)
   resetProgress: function () {
     EB.save.data.progress = EB.save._defaults().progress;
     EB.save.write();

@@ -42,7 +42,6 @@
           <button class="btn btn--accent" data-action="continue" data-i18n="menu.continue" hidden></button>
           <button class="btn" data-action="settings" data-i18n="menu.settings"></button>
           <button class="btn" data-action="about" data-i18n="menu.about"></button>
-          <button class="btn btn--ghost" data-action="exit" data-i18n="menu.exit"></button>
         </nav>
         <p class="menu__coins" id="menu-coins"></p>
       </div>
@@ -95,6 +94,12 @@
       <header class="hud" id="hud"></header>
       <nav class="zone-tabs" id="zone-tabs" hidden></nav>
       <div class="scene" id="scene"></div>
+
+      <!-- Подсказка «Поверни телефон»: видна только на узком экране в вертикальном положении (см. style.css) -->
+      <div class="rotate-hint" id="rotate-hint" role="alert">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="20" y="6" width="24" height="40" rx="5" fill="#fff" stroke="#2b3a4a" stroke-width="4"/><path d="M10 50a24 24 0 0 0 40 6" fill="none" stroke="#ffd166" stroke-width="5" stroke-linecap="round"/><path d="M50 46v10H40" fill="none" stroke="#ffd166" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <p data-i18n="game.rotate"></p>
+      </div>
 
       <!-- Советник -->
       <div class="advisor" id="advisor" hidden>

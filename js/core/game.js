@@ -155,8 +155,10 @@ EB.game = {
         EB.game.resume('minigame');
         var quality = EB.utils.clamp(result.quality, 0, 1);
         var good = quality >= EB.config.minigameGoodQuality;
-        EB.game._applyResult(hs, action, good, quality);
-        if (done) done({ correct: good, hs: hs, action: action, quality: quality });
+        // scoreFactor — множитель очков (например, лёгкий уровень сортировки даёт меньше очков)
+        var factor = result.scoreFactor || 1;
+        EB.game._applyResult(hs, action, good, quality, factor);
+        if (done) done({ correct: good, hs: hs, action: action, quality: quality, factor: factor });
       });
       return;
     }
@@ -164,7 +166,8 @@ EB.game = {
     if (done) done({ correct: !!action.correct, hs: hs, action: action, quality: 1 });
   },
 
-  _applyResult: function (hs, action, correct, quality) {
+  _applyResult: function (hs, action, correct, quality, factor) {
+    factor = factor || 1;
     var effect = action.effect || (action.correct ? {} : EB.config.wrongActionDefault);
     Object.keys(effect).forEach(function (key) {
       // Хорошие эффекты мини-игры масштабируются качеством прохождения
@@ -178,7 +181,7 @@ EB.game = {
     if (correct || action.minigame) {
       EB.triggers.remove('hs:' + hs.id);
       EB.state.change('consumption', -hs.load, hs.id);
-      EB.state.addSaved(hs.resource, (action.save || 0) * quality);
+      EB.state.addSaved(hs.resource, (action.save || 0) * quality * factor);
       EB.state.markSolved(hs.id);
       if (obj) {
         obj.setAttribute('data-state', 'ok');
@@ -187,7 +190,7 @@ EB.game = {
     }
     if (correct) {
       EB.audio.play('correct');
-      if (obj) EB.ui.fx.float(obj, '✔ +' + Math.round((action.save || 0) * quality), 'good');
+      if (obj) EB.ui.fx.float(obj, '✔ +' + Math.round((action.save || 0) * quality * factor), 'good');
       EB.events.emit('game:correct', { hs: hs, action: action });
     } else {
       EB.state.addMistake(hs.id, action.key);

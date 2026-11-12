@@ -4,10 +4,13 @@
   Предметы падают сверху. Игрок перетаскивает их (мышью или пальцем) в нужный контейнер.
   Второй способ (для касания и клавиатуры): нажми на предмет — он выделится, потом нажми на контейнер.
   Ошибка — показываем пояснение (waste.<id>.why). Предмет упал на пол — «пропущен».
-  Скорость растёт со временем. Длительность и скорость — EB.config.minigames.sorting.
+  В начале игрок выбирает сложность: лёгкий / средний / сложный.
+  Чем сложнее, тем больше предметов и выше скорость, но и очков больше (множитель points).
+  Внутри игры скорость растёт со временем. Все числа — EB.config.minigames.sorting.levels.
   Данные предметов и контейнеров — js/data/waste.js.
 
-  Итог: quality = правильно рассортированные / все показанные предметы.
+  Итог: quality = правильно рассортированные / все показанные предметы (точность),
+        scoreFactor = множитель очков выбранной сложности.
 */
 
 EB.minigames.sorting = {
@@ -19,10 +22,10 @@ EB.minigames.sorting = {
 
   start: function (box, options) {
     var self = this;
-    var cfg = EB.config.minigames.sorting;
     self._box = box;
     self._options = options;
-    self._queue = EB.utils.shuffle(EB.data.waste.items).slice(0, cfg.maxItems);
+    self._L = null;       // выбранная сложность (настройки из config.js)
+    self._queue = [];
     self._falling = [];   // {item, el, y}
     self._stats = { correct: 0, wrong: 0, missed: 0, shown: 0 };
     self._elapsed = 0;
@@ -38,15 +41,34 @@ EB.minigames.sorting = {
     this._finished = true;
   },
 
+  // Правила и выбор сложности
   _renderIntro: function () {
     var self = this;
+    var levels = EB.config.minigames.sorting.levels;
+    var cards = Object.keys(levels).map(function (key) {
+      var L = levels[key];
+      return '<button class="sort-level" data-level="' + key + '">' +
+        '<b>' + EB.t('mg.sort.level.' + key) + '</b>' +
+        '<span>' + EB.t('mg.sort.level.items', { n: Math.min(L.items, EB.data.waste.items.length) }) + '</span>' +
+        '<span>' + EB.t('mg.sort.level.speed.' + key) + '</span>' +
+        '<span>' + EB.t('mg.sort.level.points', { n: Math.round(L.points * 100) }) + '</span>' +
+        '</button>';
+    }).join('');
     self._box.innerHTML =
       '<h2 class="minigame__title">' + EB.t('mg.sort.title') + '</h2>' +
       '<p class="minigame__text">' + EB.t('mg.sort.rules') + '</p>' +
-      '<div class="panel__buttons"><button class="btn btn--primary btn--small" data-mg="go">' + EB.t('mg.go') + '</button></div>';
-    var go = self._box.querySelector('[data-mg="go"]');
-    go.addEventListener('click', function () { EB.audio.play('click'); self._renderGame(); });
-    go.focus();
+      '<p class="minigame__step">' + EB.t('mg.sort.chooseLevel') + '</p>' +
+      '<div class="sort-levels">' + cards + '</div>';
+    self._box.querySelectorAll('[data-level]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        EB.audio.play('click');
+        self._L = levels[b.getAttribute('data-level')];
+        self._levelKey = b.getAttribute('data-level');
+        self._queue = EB.utils.shuffle(EB.data.waste.items).slice(0, self._L.items);
+        self._renderGame();
+      });
+    });
+    self._box.querySelector('[data-level]').focus();
   },
 
   _renderGame: function () {
@@ -57,7 +79,7 @@ EB.minigames.sorting = {
         '<span class="bin__label">' + EB.t('waste.bin.' + b.id) + '</span></button>';
     }).join('');
     self._box.innerHTML =
-      '<div class="sort__top"><h2 class="minigame__title">' + EB.t('mg.sort.title') + '</h2>' +
+      '<div class="sort__top"><h2 class="minigame__title">' + EB.t('mg.sort.title') + ' · ' + EB.t('mg.sort.level.' + self._levelKey) + '</h2>' +
       '<span class="sort__stat">' + EB.ui.icon('timer') + '<b data-s="time"></b></span>' +
       '<span class="sort__stat">' + EB.ui.icon('check') + '<b data-s="ok"></b></span></div>' +
       '<div class="sort__field" aria-live="polite"></div>' +
@@ -82,12 +104,12 @@ EB.minigames.sorting = {
 
   // Доля прошедшего времени 0..1 — от неё зависит скорость
   _progress: function () {
-    return EB.utils.clamp(this._elapsed / (EB.config.minigames.sorting.durationSec * 1000), 0, 1);
+    return EB.utils.clamp(this._elapsed / (this._L.durationSec * 1000), 0, 1);
   },
 
   _update: function (dt) {
     var self = this;
-    var cfg = EB.config.minigames.sorting;
+    var cfg = self._L;   // настройки выбранной сложности
     self._elapsed += dt;
     var p = self._progress();
 
@@ -99,8 +121,9 @@ EB.minigames.sorting = {
     }
 
     // Падение
-    var speed = cfg.fallSpeed[0] + (cfg.fallSpeed[1] - cfg.fallSpeed[0]) * p;
     var fieldH = self._field.clientHeight;
+    // Скорость пропорциональна высоте поля: на маленьком экране предмет падает столько же секунд
+    var speed = (cfg.fallSpeed[0] + (cfg.fallSpeed[1] - cfg.fallSpeed[0]) * p) * fieldH / EB.config.minigames.sorting.fieldRefPx;
     self._falling.slice().forEach(function (f) {
       if (f.dragging) return;
       f.y += speed * dt / 1000;
@@ -240,6 +263,7 @@ EB.minigames.sorting = {
         '<li>' + EB.ui.icon('ok') + EB.t('mg.sort.statOk', { n: s.correct }) + '</li>' +
         '<li>' + EB.ui.icon('warn') + EB.t('mg.sort.statWrong', { n: s.wrong }) + '</li>' +
         '<li>' + EB.ui.icon('info') + EB.t('mg.sort.statMissed', { n: s.missed }) + '</li>' +
+        '<li>' + EB.ui.icon('star') + EB.t('mg.sort.statPoints', { level: EB.t('mg.sort.level.' + self._levelKey), n: Math.round(self._L.points * 100) }) + '</li>' +
       '</ul>' +
       '<p class="minigame__text">' + EB.t('mg.sort.lesson') + '</p>' +
       '<div class="panel__buttons"><button class="btn btn--primary btn--small" data-mg="done">' + EB.t('mg.finish') + '</button></div>';
@@ -247,7 +271,7 @@ EB.minigames.sorting = {
     btn.focus();
     btn.addEventListener('click', function () {
       EB.audio.play('click');
-      self._options.onDone({ quality: quality });
+      self._options.onDone({ quality: quality, scoreFactor: self._L.points });
     });
   }
 };

@@ -90,6 +90,9 @@ body {
 }
 
 #app { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+/* На телефонах 100vh больше видимой области (из-за адресной строки) — dvh учитывает её. Старые браузеры возьмут 100vh. */
+@supports (height: 100dvh) { #app { height: 100dvh; } }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 h2, h3 { margin: 0; }
 h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
@@ -109,12 +112,16 @@ h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
   position: absolute;
   inset: 0;
   display: none;
-  align-items: center;
-  justify-content: center;
   padding: var(--space-l);
+  overflow-y: auto;            /* не помещается по высоте (телефон, низкий экран) — прокрутка */
+  -webkit-overflow-scrolling: touch;
   opacity: 0;
   transition: opacity var(--anim-normal) ease;
 }
+/* margin: auto центрирует содержимое, а если оно выше экрана — не обрезает верх, а даёт прокрутить */
+.screen:not(.screen--game) > * { margin: auto; }
+.screen:not(.screen--game) > .panel { max-height: none; }
+.screen.screen--game { overflow: hidden; }   /* игровой экран всегда ровно в окно, без прокрутки */
 .screen.is-active { display: flex; }
 .screen.is-visible { opacity: 1; }
 
@@ -140,7 +147,7 @@ h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
   transition: transform var(--anim-fast), box-shadow var(--anim-fast), background var(--anim-fast);
   touch-action: manipulation;  /* без задержки на касание */
 }
-.btn:hover { transform: translateY(-2px); }
+@media (hover: hover) { .btn:hover { transform: translateY(-2px); } }
 .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--color-shadow); }
 .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 .btn--primary { background: var(--color-primary); color: #fff; }
@@ -563,7 +570,9 @@ h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
 .verdict--bad { background: #ffe9dc; color: var(--color-bad); border: 3px dashed var(--color-bad); }
 
 /* ===================== Сообщения и эффекты ===================== */
-.toasts { position: fixed; top: 110px; left: 50%; transform: translateX(-50%); z-index: 30; pointer-events: none; }
+/* Без transform: иначе он становится точкой отсчёта для position: fixed у сообщений рядом с объектом,
+   и такие сообщения уезжают на пол-экрана вправо */
+.toasts { position: fixed; top: 110px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; z-index: 30; pointer-events: none; }
 .toast {
   display: flex;
   align-items: center;
@@ -658,17 +667,41 @@ h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
 }
 .tips li::before { content: "💡"; position: absolute; left: 12px; top: 8px; }
 
-.final__badge {
-  display: flex; align-items: center; justify-content: center;
-  width: 96px; height: 96px;
-  border: 4px solid var(--color-line);
-  border-radius: 50%;
-  background: #dcf5e9;
-  color: var(--color-good);
+.big-number small { color: var(--color-text-muted); font-size: var(--font-size-s); }
+
+/* Финал: медаль игрока, похвала и «пьедестал» из трёх мест */
+.final__medal { display: flex; align-items: center; gap: var(--space-l); text-align: left; }
+.final__medal .medal { width: 120px; height: 144px; flex: none; filter: drop-shadow(0 6px 0 var(--color-shadow)); }
+.final__medal-text p { margin: 0 0 var(--space-s); }
+.final__place { font-size: var(--font-size-xl); font-weight: 800; color: var(--color-primary-dark); }
+.final__praise { font-size: var(--font-size-l); font-weight: 600; }
+.podium { display: flex; justify-content: center; align-items: flex-end; gap: var(--space-m); list-style: none; margin: 0; padding: 0; }
+.podium__step {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  min-width: 130px; padding: var(--space-s) var(--space-m);
+  border: 3px solid var(--color-line); border-radius: var(--radius-m) var(--radius-m) 0 0;
+  background: var(--color-surface-alt);
 }
-.final__badge .icon { width: 56px; height: 56px; }
+/* Ступени разной высоты: 2 — 1 — 3, как на настоящем пьедестале. Высота фиксирована,
+   чтобы подпись «это ты» не делала ступень выше золотой. Содержимое прижато к верху ступени. */
+.podium__step { justify-content: flex-start; }
+.podium__step { position: relative; }
+.podium__step--gold { order: 2; min-height: 8.6em; }
+.podium__step--silver { order: 1; min-height: 7.6em; }
+.podium__step--bronze { order: 3; min-height: 7em; }
+.podium__step .medal { width: 48px; height: 58px; }
+.podium__step span { color: var(--color-text-muted); }
+/* «это ты» — значок на верхнем краю ступени, чтобы не менять её высоту */
+.podium__step em {
+  position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 4px; padding: 0 10px; white-space: nowrap;
+  border: 2px solid var(--color-primary); border-radius: var(--radius-round); background: #fff;
+  font-style: normal; font-weight: 800; color: var(--color-primary-dark);
+}
+.podium { margin-top: var(--space-m); }
+.podium__step.is-mine { border-width: 4px; border-color: var(--color-primary); background: #e3f0ff; box-shadow: 0 0 0 4px #b9d7ff; }
 .final__rank-label { margin: 0; color: var(--color-text-muted); font-weight: 600; }
-.final__rank { margin: 0; font-size: var(--font-size-xl); font-weight: 800; color: var(--color-primary-dark); }
+.final__rank { color: var(--color-primary-dark); font-weight: 800; }
 .final__thanks { margin: 0; font-size: var(--font-size-l); }
 
 /* ===================== Мини-игры: общее ===================== */
@@ -719,6 +752,17 @@ h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
 .mini-meter b { text-align: right; }
 
 /* --- Сортировка --- */
+.sort-levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-m); width: 100%; }
+.sort-level {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  min-height: 48px; padding: var(--space-m);
+  border: 3px solid var(--color-line); border-radius: var(--radius-m);
+  background: var(--color-surface-alt); color: var(--color-text);
+  font: inherit; cursor: pointer; box-shadow: 0 4px 0 var(--color-shadow);
+}
+.sort-level b { font-size: var(--font-size-l); color: var(--color-primary-dark); }
+.sort-level span { color: var(--color-text-muted); }
+.sort-level:active { transform: translateY(2px); box-shadow: none; }
 .sort__top { display: flex; align-items: center; gap: var(--space-l); width: 100%; justify-content: center; }
 .sort__stat { display: inline-flex; align-items: center; gap: 6px; font-size: var(--font-size-l); }
 .sort__field {
@@ -838,8 +882,33 @@ h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
   pointer-events: none;
 }
 
+/* ===================== Подсказка «Поверни телефон» ===================== */
+.rotate-hint { display: none; }
+/* То же условие, что EB.config.portraitPauseQuery в config.js */
+@media (orientation: portrait) and (max-width: 700px) {
+  .rotate-hint {
+    position: absolute; inset: 0; z-index: 50;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-m);
+    padding: var(--space-l);
+    background: linear-gradient(160deg, var(--color-bg) 0%, var(--color-bg-accent) 100%);
+    text-align: center; font-size: var(--font-size-l); font-weight: 700;
+  }
+  .rotate-hint svg { width: 120px; height: 120px; animation: rotate-phone 2s ease-in-out infinite; }
+}
+@keyframes rotate-phone { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+
 /* ===================== Адаптивность ===================== */
-/* Низкие экраны (1366×768 с панелью браузера): сжимаем отступы */
+/* Порядок: сначала ноутбуки, потом всё меньше; в конце — большие панели.
+   Проверено на: 360×740 и 390×844 (телефон), 844×390 (телефон горизонтально), 768×1024 (планшет),
+   1024×600, 1280×800, 1366×768, 1920×1080, 2560×1440. */
+
+/* Ноутбуки: у кнопки подсказки остаются иконка и число (подпись — в aria-label) */
+@media (max-width: 1600px) {
+  .btn-icon__label { display: none; }
+  .meter { min-width: 140px; }
+}
+
+/* Невысокие экраны (1366×768 с панелью браузера): сжимаем отступы */
 @media (max-height: 800px) {
   .screen { padding: var(--space-m); }
   .menu, .menu__buttons, .panel { gap: var(--space-s); }
@@ -852,24 +921,109 @@ h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
   .hud { padding: 4px var(--space-m); }
   .card { padding: var(--space-m); }
   .minigame { padding: var(--space-m); gap: var(--space-s); }
+  .final__medal .medal { width: 90px; height: 108px; }
 }
 
-/* Ноутбуки: у кнопки подсказки остаются иконка и число (подпись — в aria-label) */
-@media (max-width: 1600px) {
-  .btn-icon__label { display: none; }
-  .meter { min-width: 140px; }
+/* Планшеты и узкие окна */
+@media (max-width: 1100px) {
+  .hud { gap: 4px var(--space-s); }
+  .hud__meters { flex-basis: 100%; }                   /* шкалы — отдельной строкой */
+  .hud__counters { flex: 1 1 auto; }
+  .meter { min-width: 0; }
 }
-
-/* Узкие экраны: уровни и мини-игры в столбик */
 @media (max-width: 900px) {
   .results__cols { grid-template-columns: 1fr; }
-  .level-cards { grid-template-columns: 1fr; }
-  .level-card { min-height: 0; }
-  .thermo { grid-template-columns: 1fr; }
+  .thermo { grid-template-columns: 1fr 1fr; }
+  .thermo__situation { grid-column: 1 / 3; text-align: center; }
   .sort__bins { grid-template-columns: repeat(4, 1fr); }
-  .setting { grid-template-columns: 1fr; text-align: center; }
-  .setting .lang-switch { grid-column: auto; }
   .res-row { grid-template-columns: 28px 1fr 1fr 56px; }
+  .final__medal { flex-direction: column; text-align: center; gap: var(--space-s); }
+}
+
+/* Телефоны (вертикально) и очень узкие окна */
+@media (max-width: 640px) {
+  :root { --font-size-l: 20px; --font-size-xl: 26px; --btn-width: 100%; }
+  .screen { padding: var(--space-s); }
+  .panel { padding: var(--space-m); border-width: 3px; border-radius: var(--radius-m); }
+  .menu { width: 100%; }
+  .menu__buttons { width: 100%; }
+  .level-cards { grid-template-columns: 1fr; }
+  .level-card { min-height: 0; flex-direction: row; flex-wrap: wrap; justify-content: center; padding: var(--space-m); }
+  .level-card__icon { width: 48px; height: 48px; }
+  .level-card__desc { flex-basis: 100%; }
+  .setting { grid-template-columns: 1fr 64px; text-align: left; }
+  .setting__label { grid-column: 1 / 3; }
+  .setting .lang-switch { grid-column: 1 / 3; }
+  .panel__buttons { width: 100%; }
+  .panel__buttons .btn { flex: 1 1 140px; }
+  .results__numbers { gap: var(--space-s); }
+  .big-number { min-width: 0; flex: 1 1 100px; }
+  .res-row { grid-template-columns: 24px 1fr 56px; }
+  .res-row__bar { grid-column: 2 / 4; grid-row: 2; }
+  .podium { gap: var(--space-xs); }
+  .podium__step { min-width: 0; flex: 1; padding-left: var(--space-xs); padding-right: var(--space-xs); text-align: center; }
+  .sort-levels { grid-template-columns: 1fr; }
+  .sort__bins { grid-template-columns: repeat(3, 1fr); }
+  .thermo { grid-template-columns: 1fr; }
+  .thermo__situation { grid-column: auto; }
+}
+
+/* Телефон горизонтально и другие очень низкие экраны: каждый пиксель высоты — сцене */
+@media (max-height: 560px) {
+  :root { --font-size-l: 20px; --font-size-xl: 24px; --font-size-xxl: 34px; }
+  .screen { padding: var(--space-s); }
+  .panel { padding: var(--space-s) var(--space-m); gap: var(--space-s); border-width: 3px; }
+  .menu { gap: 4px; }
+  .menu__logo { height: 52px; width: 120px; }
+  .menu__subtitle { margin: 0; }
+  .menu__buttons { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-s); }
+  .menu__buttons .btn { width: min(260px, 40vw); }
+  .level-card { min-height: 0; padding: var(--space-s); gap: 4px; }
+  .level-card__icon { width: 40px; height: 40px; }
+  .loading__spinner--small { display: none; }
+  /* HUD в одну строку: у шкал прячем подписи (остаются иконка, число, полоса и значок статуса) */
+  .hud { flex-wrap: nowrap; padding: 2px var(--space-s); gap: var(--space-s); border-bottom-width: 3px; }
+  .hud__meters { flex: 1 1 auto; gap: 4px; }
+  .meter { padding: 0 4px; grid-template-areas: "icon value status" "bar bar bar"; grid-template-columns: auto 1fr auto; }
+  .meter__label { display: none; }
+  .meter__value { font-size: 18px; }
+  .meter__bar { height: 10px; }
+  .hud__counters { flex: 0 1 auto; display: grid; grid-template-columns: auto auto; gap: 0 var(--space-s); }
+  .counter--kwh, .counter--water, .counter--heat { display: none; } /* потери видны в итогах уровня */
+  .btn-icon { min-width: 48px; min-height: 48px; padding: 0 var(--space-s); }
+  .zone-tabs { padding: 4px; border-bottom-width: 3px; }
+  .zone-tab { min-height: 48px; min-width: 0; padding: 0 var(--space-m); }
+  .advisor { max-width: 60vw; left: 4px; bottom: 4px; }
+  .advisor__figure { width: 64px; height: 80px; }
+  .advisor__bubble { margin-bottom: 30px; padding: var(--space-s); }
+  .layer { padding: 4px; }
+  .card { padding: var(--space-s) var(--space-m); border-width: 3px; }
+  .card__title { margin: 4px 0; }
+  .card__text { margin-bottom: var(--space-s); font-size: var(--font-size-base); }
+  .btn--action { padding: var(--space-s) var(--space-m); }
+  .minigame { padding: var(--space-s); gap: 4px; border-width: 3px; }
+  .minigame__text { font-size: var(--font-size-base); }
+  .thermo { grid-template-columns: 1fr auto 1fr; gap: var(--space-s); }
+  .thermo__situation { grid-column: auto; text-align: left; }
+  .thermo__dial { width: 36vh; height: 36vh; }
+  .thermo__buttons .btn-icon { min-height: 48px; }
+  .minigame__step { display: none; }
+  .sort__field { height: 38vh; }
+  .sort__bins { grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .bin { min-height: 64px; padding: 4px 2px; border-top-width: 8px; }
+  .bin__icon { font-size: 26px; }
+  .waste-item { min-height: 48px; }
+  .waste-item__icon { font-size: 24px; }
+  .sort-levels { grid-template-columns: repeat(3, 1fr); }
+  .solar-board { width: min(760px, 100%, 150vh); }
+  .solar-part { min-width: 90px; min-height: 64px; }
+  .solar-part svg { width: 36px; height: 36px; }
+  .stars .icon, #screen-results .stars .icon { width: 36px; height: 36px; }
+  .big-number b, #screen-results .big-number b { font-size: 24px; }
+  .final__medal { flex-direction: row; text-align: left; }
+  .final__medal .medal { width: 70px; height: 84px; }
+  .podium__step .medal { width: 36px; height: 44px; }
+  .toasts { top: 60px; }
 }
 
 /* Большие интерактивные панели: всё крупнее */
@@ -881,7 +1035,35 @@ h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
     --btn-width: 420px;
   }
   .btn-icon { min-width: 64px; min-height: 64px; }
+  .advisor { max-width: min(760px, 60vw); }
   .advisor__figure { width: 150px; height: 190px; }
+  .panel { width: min(760px, 100%); }
+  .panel--wide { width: min(1200px, 100%); }
+  .card { width: min(720px, 100%); }
+  .minigame { width: min(1300px, 100%); }
+}
+
+/* 2K и 4K панели: ещё крупнее, чтобы читалось с задних парт */
+@media (min-width: 2400px) {
+  :root {
+    --font-size-base: 28px;
+    --font-size-s: 26px;
+    --font-size-l: 36px;
+    --font-size-xl: 56px;
+    --font-size-xxl: 88px;
+    --btn-width: 560px;
+  }
+  .btn-icon { min-width: 84px; min-height: 84px; }
+  .btn-icon .icon, .meter__icon .icon { width: 36px; height: 36px; }
+  .meter__bar { height: 20px; }
+  .advisor { max-width: min(1100px, 55vw); }
+  .advisor__figure { width: 200px; height: 250px; }
+  .zone-tab { min-height: 72px; min-width: 220px; }
+  .panel { width: min(1000px, 100%); }
+  .panel--wide { width: min(1600px, 100%); }
+  .card { width: min(960px, 100%); }
+  .minigame { width: min(1700px, 100%); }
+  .level-card__icon { width: 110px; height: 110px; }
 }
 
 /* Если пользователь просил меньше анимации — уважаем это */

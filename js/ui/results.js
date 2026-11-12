@@ -6,10 +6,13 @@
   2–3 персональных совета, случайный факт.
   Кнопки: Переиграть / Следующий уровень (или «Финал» после последнего) / Меню.
 
-  Финал (после прохождения всех уровней): общий счёт, звёзды, звание игрока
-  («Стажёр» → «Энергоменеджер» → «Эксперт по энергоэффективности»), благодарность, «Титры».
+  Финал (после прохождения всех уровней): подведение итогов по эко-коинам —
+  медаль за 1, 2 или 3 место с похвалой, «пьедестал» из трёх мест с отметкой «это ты»,
+  сколько не хватило до следующей медали; затем эко-коины, звёзды, общий счёт,
+  звание игрока («Стажёр» → «Энергоменеджер» → «Эксперт по энергоэффективности»), благодарность, «Титры».
 
-  Как менять: формула очков — js/core/scoring.js, пороги званий — EB.config.ranks.
+  Как менять: формула очков — js/core/scoring.js, пороги званий — EB.config.ranks,
+  пороги медалей — EB.config.medals, тексты похвалы — ключи medal.* в texts.*.js.
 */
 
 EB.ui.results = {
@@ -46,7 +49,8 @@ EB.ui.results = {
       EB.ui.results._stars(r.stars) +
       '<div class="results__numbers">' +
         '<div class="big-number"><span>' + EB.t('results.score') + '</span><b>' + r.score + '</b></div>' +
-        '<div class="big-number big-number--coins"><span>' + EB.t('results.coins') + '</span><b>' + EB.ui.icon('coin') + ' +' + r.coins + '</b></div>' +
+        '<div class="big-number big-number--coins"><span>' + EB.t('results.coins') + '</span><b>' + EB.ui.icon('coin') + ' +' + r.coins + '</b>' +
+          '<small>' + EB.t('results.coinsTotal', { n: r.coinsTotal }) + '</small></div>' +
         '<div class="big-number"><span>' + EB.t('results.solved') + '</span><b>' + r.solved + ' / ' + r.total + '</b></div>' +
       '</div>' +
       '<p class="results__formula">' + esc(EB.t('results.formula', r.parts)) + '</p>' +
@@ -63,7 +67,9 @@ EB.ui.results = {
           '<button class="btn btn--primary btn--small" id="res-next"' + (nextOpen ? '' : ' hidden') + '>' + EB.t('results.next') + '</button>') +
         '<button class="btn btn--ghost btn--small" id="res-menu">' + EB.t('results.menu') + '</button>' +
       '</div>' +
-      (!nextOpen && !isLast ? '<p class="muted">' + EB.t('results.needStar') + '</p>' : '');
+      (!nextOpen && !isLast ? '<p class="muted">' + EB.t('results.needStar') + '</p>' : '') +
+      // Переиграли уровень хуже, чем раньше: монеты в сумму не прибавились — объясняем почему
+      (r.coins > 0 && r.coinsAdded === 0 ? '<p class="muted">' + EB.t('results.coinsBestOnly') + '</p>' : '');
 
     EB.ui.renderFact(document.getElementById('results-fact'), EB.ui.randomFact());
 
@@ -84,29 +90,72 @@ EB.ui.results = {
     if (first) setTimeout(function () { first.focus({ preventScroll: true }); }, EB.config.fadeMs);
   },
 
+  // Медаль: круг с номером места и лентой. Место видно по ЦИФРЕ, а не только по цвету (для дальтоников).
+  _medalSvg: function (medal) {
+    var colors = { gold: ['#f2c230', '#b58900'], silver: ['#cfd6de', '#7d8a98'], bronze: ['#e09a5c', '#9a5a28'] }[medal.key];
+    return '<svg class="medal" viewBox="0 0 100 120" aria-hidden="true">' +
+      '<path d="M30 0h16l10 40H40zM54 0h16L60 40H44z" fill="#1f6fd1" stroke="#2b3a4a" stroke-width="3" stroke-linejoin="round"/>' +
+      '<circle cx="50" cy="76" r="38" fill="' + colors[0] + '" stroke="#2b3a4a" stroke-width="4"/>' +
+      '<circle cx="50" cy="76" r="28" fill="none" stroke="' + colors[1] + '" stroke-width="4"/>' +
+      '<text x="50" y="91" text-anchor="middle" font-size="40" font-weight="800" fill="#1d2b3a">' + medal.place + '</text>' +
+      '</svg>';
+  },
+
+  // Какую медаль заработал игрок: первая по порядку, порог которой он прошёл
+  medalFor: function (coins) {
+    var list = EB.config.medals;
+    for (var i = 0; i < list.length; i++) {
+      if (coins >= list[i].minCoins) return list[i];
+    }
+    return list[list.length - 1];
+  },
+
   showFinal: function () {
     var p = EB.save.data.progress;
+    var esc = EB.ui.results._esc;
     var totalScore = 0;
     var totalStars = 0;
     EB.config.levelOrder.forEach(function (id) {
-      totalScore += p.best[id] || 0;
+      totalScore += p.levelScores[id] || 0;
       totalStars += p.stars[id] || 0;
     });
     var rank = EB.config.ranks[0];
     EB.config.ranks.forEach(function (r) { if (totalStars >= r.minStars) rank = r; });
 
+    // Подведение итогов по эко-коинам: медаль, место и похвала
+    var coins = p.ecoCoins;
+    var medal = EB.ui.results.medalFor(coins);
+    var medals = EB.config.medals;
+    var better = medals[medals.indexOf(medal) - 1];          // следующая медаль (если не золото)
+    var podium = medals.map(function (m) {
+      var mine = m === medal;
+      return '<li class="podium__step podium__step--' + m.key + (mine ? ' is-mine' : '') + '">' +
+        EB.ui.results._medalSvg(m) +
+        '<b>' + EB.t('medal.place', { n: m.place }) + '</b>' +
+        '<span>' + EB.t('medal.from', { n: m.minCoins }) + '</span>' +
+        (mine ? '<em>' + EB.ui.icon('check') + EB.t('medal.you') + '</em>' : '') +
+        '</li>';
+    }).join('');
+
     var box = document.getElementById('final-content');
     box.innerHTML =
-      '<div class="final__badge">' + EB.ui.icon('leaf') + '</div>' +
       '<h2 class="panel__title">' + EB.t('final.title') + '</h2>' +
-      '<p class="final__rank-label">' + EB.t('final.rankLabel') + '</p>' +
-      '<p class="final__rank">' + EB.t(rank.key) + '</p>' +
-      '<div class="results__numbers">' +
-        '<div class="big-number"><span>' + EB.t('final.score') + '</span><b>' + totalScore + '</b></div>' +
-        '<div class="big-number"><span>' + EB.t('final.stars') + '</span><b>' + EB.ui.icon('star', 'icon--star is-on') + ' ' + totalStars + ' / ' + (EB.config.levelOrder.length * 3) + '</b></div>' +
-        '<div class="big-number big-number--coins"><span>' + EB.t('results.coins') + '</span><b>' + EB.ui.icon('coin') + ' ' + p.ecoCoins + '</b></div>' +
+      '<div class="final__medal">' +
+        EB.ui.results._medalSvg(medal) +
+        '<div class="final__medal-text">' +
+          '<p class="final__place">' + esc(EB.t('medal.title.' + medal.key, { n: medal.place })) + '</p>' +
+          '<p class="final__praise">' + esc(EB.t('medal.praise.' + medal.key, { n: coins })) + '</p>' +
+          (better ? '<p class="muted">' + esc(EB.t('medal.toNext', { n: better.minCoins - coins, medal: EB.t('medal.name.' + better.key) })) + '</p>' : '') +
+        '</div>' +
       '</div>' +
-      '<p class="final__thanks">' + EB.ui.results._esc(EB.t('final.thanks')) + '</p>' +
+      '<ol class="podium" aria-label="' + EB.t('medal.podium') + '">' + podium + '</ol>' +
+      '<div class="results__numbers">' +
+        '<div class="big-number big-number--coins"><span>' + EB.t('results.coins') + '</span><b>' + EB.ui.icon('coin') + ' ' + coins + '</b></div>' +
+        '<div class="big-number"><span>' + EB.t('final.stars') + '</span><b>' + EB.ui.icon('star', 'icon--star is-on') + ' ' + totalStars + ' / ' + (EB.config.levelOrder.length * 3) + '</b></div>' +
+        '<div class="big-number"><span>' + EB.t('final.score') + '</span><b>' + totalScore + '</b></div>' +
+      '</div>' +
+      '<p class="final__rank-label">' + EB.t('final.rankLabel') + ' <b class="final__rank">' + EB.t(rank.key) + '</b></p>' +
+      '<p class="final__thanks">' + esc(EB.t('final.thanks')) + '</p>' +
       '<div class="panel__buttons">' +
         '<button class="btn btn--small" id="final-credits">' + EB.t('final.credits') + '</button>' +
         '<button class="btn btn--primary btn--small" id="final-menu">' + EB.t('results.menu') + '</button>' +

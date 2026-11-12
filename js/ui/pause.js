@@ -41,6 +41,18 @@ EB.ui.pause = {
       if (EB.ui.pause.isOpen()) EB.ui.pause.hide(); else EB.ui.pause.show();
     });
 
+    // Телефон повернули вертикально — сцена слишком мелкая, ставим паузу (см. .rotate-hint в style.css)
+    var portrait = window.matchMedia ? window.matchMedia(EB.config.portraitPauseQuery) : null;
+    function checkRotate() {
+      if (!portrait || !EB.game.running) return;
+      if (portrait.matches) EB.game.pause('rotate'); else EB.game.resume('rotate');
+    }
+    if (portrait) {
+      if (portrait.addEventListener) portrait.addEventListener('change', checkRotate);
+      else portrait.addListener(checkRotate); // старые Safari
+    }
+    EB.events.on('game:start', checkRotate);
+
     // Свернули вкладку — пауза, чтобы проблемы не «тикали» без игрока
     document.addEventListener('visibilitychange', function () {
       if (document.hidden && EB.game.running && EB.screens.current() === 'game') EB.ui.pause.show();
