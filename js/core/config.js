@@ -156,15 +156,10 @@ EB.config = {
   // true — сначала пытаться играть файл assets/audio/voice/<id>.mp3, если его нет — синтез речи
   // Записанные реплики лежат в assets/audio/voice/ (RU) и assets/audio/voice/be/ (BE), список — docs/voice-lines.md
   voiceFiles: true,
-  // Реплики новых уровней ещё не записаны — для них сразу синтез речи (без ошибок «файл не найден» в консоли).
-  // Когда запишете mp3 (имена — в docs/voice-lines.md), удалите id из этого списка.
-  voiceNotRecorded: [
-    'advisor.start.agro', 'advisor.tip.agro',
-    'advisor.start.shop', 'advisor.tip.shop',
-    'advisor.start.office', 'advisor.tip.office',
-    'advisor.start.hospital', 'advisor.tip.hospital',
-    'advisor.start.factory', 'advisor.tip.factory'
-  ],
+  // Реплики, для которых ещё нет mp3: для них сразу синтез речи (без ошибок «файл не найден» в консоли).
+  // Сейчас все 24 реплики записаны, список пуст. Добавляя новую реплику, впишите сюда её id, пока нет записи,
+  // например: voiceNotRecorded: ['advisor.start.dacha', 'advisor.tip.dacha'],
+  voiceNotRecorded: [],
   speechRate: 1.0,
   speechDelayMs: 80,            // пауза перед синтезом речи (обход ошибки Chrome после cancel)
   advisorBubbleMs: 6000,        // сколько висит облачко реплики
