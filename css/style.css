@@ -871,6 +871,652 @@ h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
 .solar-board.is-running .solar-window { fill: #ffe066; transition: fill 1.2s 1s; }
 @keyframes flow { to { stroke-dashoffset: -26; } }
 
+/* --- Тепловизор (js/minigames/thermal.js) --- */
+/* --- Тепловизор (js/minigames/thermal.js) --- */
+.thml { display: flex; flex-direction: column; align-items: center; gap: var(--space-s); width: 100%; }
+.thml__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-s) var(--space-m); }
+.thml__time {
+  display: inline-flex; align-items: center; gap: 6px; min-width: 96px; padding: 2px var(--space-m);
+  border: 3px solid var(--color-line); border-radius: var(--radius-round); background: var(--color-surface-alt);
+  font-size: var(--font-size-l); font-weight: 800; font-variant-numeric: tabular-nums;
+}
+.thml__time .icon { width: 24px; height: 24px; }
+/* Мало времени: не только цвет — рамка толще и значок мигает */
+.thml__time.is-low { border-width: 4px; border-color: var(--color-bad); color: var(--color-bad); background: #fff1e6; }
+.thml__time.is-low .icon { animation: thml-blink 1s steps(2) infinite; }
+@keyframes thml-blink { 50% { opacity: .2; } }
+
+.thml__play { display: flex; flex-direction: column; align-items: center; gap: var(--space-s); width: 100%; }
+/* Сцена 16:9; ширина ограничена ещё и высотой окна, чтобы всё влезло без прокрутки */
+.thml__stage {
+  width: min(100%, calc((100vh - 350px) * 16 / 9));
+  aspect-ratio: 16 / 9;
+  border: 4px solid var(--color-line);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  background: #d3dde7;
+}
+.thml__svg { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; user-select: none; -webkit-user-select: none; }
+.thml__svg:focus-visible { outline: 4px solid var(--color-focus); outline-offset: -4px; }
+.thml--end .thml__svg { cursor: default; }
+
+.thml__side { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-s) var(--space-l); width: 100%; }
+.thml__found { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-s); font-size: var(--font-size-l); font-weight: 700; }
+.thml__pips { display: inline-flex; gap: 4px; }
+/* Не найдено — пустой кружок, найдено — флажок (различаются формой) */
+.thml__pip { width: 26px; height: 26px; border: 3px dashed #8a9bb0; border-radius: 50%; }
+.thml__pip.is-on { border: 0; border-radius: 0; }
+.thml__pip svg { display: block; width: 100%; height: 100%; }
+.thml__msg { flex-basis: 100%; order: 3; min-height: 2.8em; } /* место под 2 строки — вёрстка не прыгает */
+.thml__buttons { flex-wrap: nowrap; }
+
+/* Легенда: холодно — шкала — тепло; «волны — утечка» */
+.thml__legend { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-s); font-weight: 700; color: var(--color-text-muted); }
+.thml__legend-bar {
+  width: 140px; height: 18px; border: 2px solid var(--color-line); border-radius: var(--radius-round);
+  background: linear-gradient(90deg, #07061f, #2a1d6e, #7a2fae, #d2562f, #ffd23f, #fff4a8);
+}
+.thml__legend-wave { display: inline-flex; align-items: center; gap: 6px; margin-left: var(--space-s); }
+.thml__top .thml__legend-bar { width: 100px; }
+.thml__legend-wave svg { width: 32px; height: 26px; }
+
+/* Волны над утечками: тёплые поднимаются, холодные падают или тянутся по полу */
+.thml-wave { animation: thml-rise 1.6s ease-in-out infinite; }
+.thml-wave--fall { animation-name: thml-fall; }
+.thml-wave--drift { animation-name: thml-drift; }
+@keyframes thml-rise { 0% { transform: translateY(8px); opacity: .3; } 50% { opacity: 1; } 100% { transform: translateY(-10px); opacity: .3; } }
+@keyframes thml-fall { 0% { transform: translateY(-6px); opacity: .3; } 50% { opacity: 1; } 100% { transform: translateY(12px); opacity: .3; } }
+@keyframes thml-drift { 0% { transform: translateX(10px); opacity: .3; } 50% { opacity: 1; } 100% { transform: translateX(-14px); opacity: .3; } }
+.thml-drop { animation: thml-drop 1.2s ease-in infinite; }
+@keyframes thml-drop { 0% { transform: translateY(0); opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(24px); opacity: 0; } }
+.thml-flag, .thml-check { animation: thml-pop .3s ease-out; }
+@keyframes thml-pop { 0% { opacity: 0; } 100% { opacity: 1; } }
+
+/* Итог */
+.thml__summary { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-s) var(--space-l); margin: 0; padding: 0; list-style: none; font-size: var(--font-size-l); font-weight: 700; }
+.thml__summary li { display: inline-flex; align-items: center; gap: 6px; text-align: left; }
+.thml__summary li:nth-child(1) .icon { color: var(--color-good); }
+.thml__summary li:nth-child(2) .icon { color: var(--color-bad); }
+.thml__summary li:nth-child(3) .icon { color: var(--color-primary); }
+.thml__summary .icon { flex: none; width: 26px; height: 26px; }
+.thml__lesson { flex-basis: 100%; }
+.thml--end .thml__stage { width: min(100%, calc((100vh - 420px) * 16 / 9)); }
+
+/* Невысокие экраны (1366×768 и т. п.) */
+@media (max-height: 800px) {
+  .thml__stage { width: min(100%, calc((100vh - 310px) * 16 / 9)); }
+  .thml--end .thml__stage { width: min(100%, calc((100vh - 370px) * 16 / 9)); }
+}
+
+/* Телефон вертикально и узкие окна */
+@media (max-width: 640px) {
+  .thml__top { gap: var(--space-s); }
+  .thml__stage { width: 100%; border-width: 3px; }
+  .thml--end .thml__stage { width: 100%; }
+  .thml__side { gap: var(--space-s); }
+  .thml__buttons { flex-wrap: wrap; }
+  .thml__legend-bar { width: 90px; }
+  .thml__legend-wave { margin-left: 0; }
+}
+
+/* Телефон горизонтально (844×390) и другие низкие экраны: сцена слева, всё остальное справа */
+@media (max-height: 560px) {
+  .thml { gap: 4px; }
+  .thml__top { gap: var(--space-m); }
+  .thml__time { padding: 0 var(--space-s); font-size: var(--font-size-base); border-width: 2px; }
+  .thml__rules { display: none; }               /* полные правила были на первом экране */
+  .thml__play { flex-direction: row; align-items: center; }
+  .thml__stage { flex: none; width: min(62vw, calc((100vh - 64px) * 16 / 9)); border-width: 3px; }
+  .thml__side { flex-direction: column; flex-wrap: nowrap; justify-content: center; gap: var(--space-s); min-width: 0; }
+  .thml__found { font-size: var(--font-size-base); }
+  .thml__pips { display: none; }              /* число найденных — в подписи, значки не помещаются */
+  .thml__msg { flex-basis: auto; order: 0; font-size: var(--font-size-base); }
+  .thml__buttons { flex-direction: column; flex-wrap: nowrap; width: 100%; gap: var(--space-s); }
+  .thml__buttons .btn { width: 100%; min-width: 0; padding: 4px var(--space-s); }
+  .thml__legend { font-size: var(--font-size-base); }
+  .thml__legend-bar { width: 100px; }
+  /* Итог: картинка поменьше, чтобы справа влезли цифры и пояснение */
+  .thml--end .thml__stage { width: min(46vw, calc((100vh - 64px) * 16 / 9)); }
+  .thml--end .thml__rules { display: block; }
+  .thml--end .thml__top { display: none; }
+  .thml__summary { flex-direction: column; align-items: flex-start; gap: 2px; font-size: var(--font-size-base); }
+  .thml__lesson { flex-basis: auto; font-size: var(--font-size-base); text-align: left; }
+  .thml--end .thml__side .panel__buttons { width: 100%; }
+}
+
+/* Большие интерактивные панели */
+@media (min-width: 1800px) {
+  .thml__stage { width: min(100%, calc((100vh - 400px) * 16 / 9)); }
+  .thml--end .thml__stage { width: min(100%, calc((100vh - 460px) * 16 / 9)); }
+  .thml__time .icon { width: 30px; height: 30px; }
+  .thml__pip { width: 32px; height: 32px; }
+  .thml__legend-bar { width: 200px; height: 22px; }
+  .thml__legend-wave svg { width: 40px; height: 32px; }
+  .thml__summary .icon { width: 32px; height: 32px; }
+}
+
+/* --- Вечерний обход (js/minigames/evening.js) --- */
+/* ---------- Мини-игра «Вечерний обход» (js/minigames/evening.js) ----------
+   План офиса — SVG во всю ширину .eve-board, приборы — кнопки .eve-dev поверх плана
+   (место задаётся в процентах из LAYOUT). Состояние прибора: .is-on / .is-sleep / .is-off —
+   отличается не только цветом: свечение, сплошная/пунктирная рамка, значок в углу (молния, луна, перечёркнутая молния). */
+.eve-rules { font-size: var(--font-size-base); }
+.eve-round-name { margin: 0; font-size: var(--font-size-l); font-weight: 800; color: var(--color-primary-dark); }
+.eve-legend { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-s) var(--space-l); font-weight: 700; }
+.eve-legend__title { color: var(--color-text-muted); }
+.eve-legend__item { display: inline-flex; align-items: center; gap: 6px; }
+.eve-badge { flex: none; }
+.eve-legend .eve-badge { width: 32px; height: 32px; }
+.eve-badge .eve-b-sleep, .eve-badge .eve-b-off { display: none; }
+.is-sleep > .eve-badge .eve-b-on, .is-off > .eve-badge .eve-b-on { display: none; }
+.is-sleep > .eve-badge .eve-b-sleep, .is-off > .eve-badge .eve-b-off { display: inline; }
+
+/* Экран раунда: сверху (или слева на низком экране) — заголовок, таймер, прогресс, пояснение; ниже — план */
+.eve-play { display: flex; flex-direction: column; align-items: center; gap: var(--space-s); width: 100%; }
+.eve-side { display: flex; flex-direction: column; align-items: center; gap: var(--space-xs); width: 100%; }
+.eve-goal { margin: 0; max-width: 860px; }
+.eve-status { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: center; gap: var(--space-xs) var(--space-l); width: 100%; }
+.eve-status .mini-meter { width: min(230px, 100%); text-align: left; grid-template-columns: 1fr 56px; }
+.eve-lbl { font-style: normal; }
+.eve-meter--time .icon { color: var(--color-primary); }
+.eve-meter--time .mini-meter__bar span { background: var(--color-primary); transition: width .2s linear; }
+/* Мало времени: полоска в штриховку и значок «!» рядом с числом — не только цвет */
+.eve-meter--time.is-low .mini-meter__bar span { background: repeating-linear-gradient(45deg, var(--color-bad) 0 8px, #f5b38f 8px 14px); }
+.eve-meter--time.is-low b::after { content: " !"; color: var(--color-bad); }
+.eve-meter--done .icon { color: var(--color-good); }
+.eve-meter--done .mini-meter__bar span { background: radial-gradient(circle at 5px 5px, #8fe0b8 2.5px, var(--color-good) 3px) 0 0 / 10px 10px; }
+.eve-mist { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-weight: 700; min-height: 48px; }
+.eve-mist .icon { color: var(--color-bad); }
+.eve-feedback { min-height: 2.8em; max-width: 900px; }
+
+/* План: размер по высоте экрана, чтобы всё влезло без прокрутки (1000 / 560 ≈ 1.786) */
+.eve-wrap { width: 100%; display: flex; justify-content: center; }
+.eve-board {
+  position: relative;
+  flex: none;
+  width: min(100%, calc((100vh - 360px) * 1.786));
+  aspect-ratio: 1000 / 560;
+  border: 3px solid var(--color-line);
+  border-radius: var(--radius-m);
+  overflow: visible;
+}
+.eve-plan { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: calc(var(--radius-m) - 3px); }
+.eve-win { fill: #bfe6ff; transition: fill .4s; }
+.eve-board.is-night .eve-win { fill: #2d3f6b; }
+.eve-shade { opacity: 0; transition: opacity .35s; }
+.eve-board.dark-open .eve-shade--open,
+.eve-board.dark-meeting .eve-shade--meeting,
+.eve-board.dark-hall .eve-shade--hall { opacity: .32; }
+
+/* Прибор-кнопка */
+.eve-dev {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(48px, 8.6%, 104px);
+  aspect-ratio: 1 / 1;
+  min-height: 48px;
+  padding: 4px;
+  border: 3px solid var(--color-line);
+  border-radius: var(--radius-s);
+  background: #fffbe6;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: box-shadow .2s, background .2s, transform var(--anim-fast);
+}
+.eve-dev.is-on { box-shadow: 0 0 0 3px #ffd166, 0 0 16px 5px rgba(255, 190, 40, .7); }
+.eve-dev__pic { width: 100%; height: 100%; transition: filter .2s; }
+.eve-dev__badge { position: absolute; top: -12px; right: -12px; width: 46%; height: 46%; min-width: 24px; min-height: 24px; }
+.eve-dev.is-sleep { background: #ece6ff; box-shadow: 0 0 0 3px #b9a6ff; }
+.eve-dev.is-sleep .eve-dev__pic { filter: grayscale(.6) brightness(.75); }
+.eve-dev.is-off { background: #d5dbe1; border-style: dashed; box-shadow: none; }
+.eve-dev.is-off .eve-dev__pic { filter: grayscale(1) brightness(.7); }
+.eve-dev.is-off .eve-rays, .eve-dev.is-sleep .eve-rays { display: none; }
+.eve-dev.is-on .eve-blink { animation: eve-blink 1s steps(2) infinite; }
+.eve-dev:disabled { cursor: default; }
+@media (hover: hover) { .eve-dev:not(:disabled):hover { z-index: 3; transform: translate(-50%, -50%) scale(1.08); } }
+.eve-dev:focus-visible { z-index: 3; outline: 4px solid var(--color-focus); outline-offset: 4px; }
+/* Нужный прибор «выключили» по ошибке: мигает и включается обратно (длительность — flickerMs из config) */
+.eve-dev.is-flicker { animation: eve-flicker 300ms steps(2) 3; }
+/* Свет в коридоре, когда пора уходить: пульсирует с пунктирной обводкой */
+.eve-dev.is-last { animation: eve-pulse 1s ease-in-out infinite; outline: 4px dashed var(--color-focus); outline-offset: 5px; }
+@keyframes eve-flicker { 50% { background: #d5dbe1; box-shadow: none; filter: grayscale(1) brightness(.6); } }
+@keyframes eve-pulse { 50% { transform: translate(-50%, -50%) scale(1.12); } }
+@keyframes eve-blink { 50% { opacity: .2; } }
+
+/* Всплывающая подпись: название и состояние прибора */
+.eve-tip {
+  position: absolute;
+  z-index: 5;
+  width: max-content;
+  max-width: min(92%, 380px);
+  padding: 4px 12px;
+  border-radius: var(--radius-s);
+  background: var(--color-text);
+  color: #fff;
+  font-size: var(--font-size-s);
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  pointer-events: none;
+  transform: translateX(-50%);
+  box-shadow: 0 3px 0 var(--color-shadow);
+}
+.eve-tip[hidden] { display: none; }
+
+/* Итоги раунда */
+.eve-summary { list-style: none; margin: 0; padding: 0; font-size: var(--font-size-l); text-align: left; }
+.eve-summary li { display: flex; align-items: center; gap: var(--space-s); margin: var(--space-xs) 0; }
+.eve-summary .is-good .icon { color: var(--color-good); }
+.eve-summary .is-bad .icon { color: var(--color-bad); }
+.eve-summary .is-info .icon { color: var(--color-primary); }
+.eve-summary .is-star .icon { color: var(--color-accent); }
+.eve-summary .is-star { font-weight: 800; }
+
+/* Телефон вертикально и узкие окна: план не сжимаем меньше 520 px (иначе кнопки налезут), листается вбок */
+@media (max-width: 640px) {
+  .eve-wrap { justify-content: flex-start; overflow-x: auto; padding: 14px 4px; }
+  .eve-board { width: max(100%, 520px); }
+  .eve-status .mini-meter { width: min(160px, 46%); }
+}
+
+/* Невысокие экраны (ноутбук 1366×768 с панелью браузера, 1024×600): слева панель, справа план во всю высоту.
+   Иначе план под заголовком и таймером выходит слишком мелким и кнопки приборов налезают друг на друга. */
+@media (max-height: 700px) {
+  .eve-play { display: grid; grid-template-columns: minmax(190px, 1fr) auto; align-items: start; gap: var(--space-s); }
+  .eve-side { align-items: stretch; text-align: left; }
+  .eve-side .minigame__title { font-size: 28px; margin: 0; }
+  .eve-goal { font-size: var(--font-size-base); }
+  .eve-status { flex-direction: column; align-items: stretch; gap: 2px; }
+  .eve-status .mini-meter { width: 100%; grid-template-columns: auto 1fr 44px; }
+  .eve-status .mini-meter > span:first-child { grid-column: auto; }
+  .eve-lbl { display: none; }                  /* остаются значок, полоска и число */
+  .eve-mist { min-height: 0; }
+  .eve-feedback { min-height: 0; font-size: var(--font-size-base); }
+  .eve-wrap { justify-content: flex-end; }
+  /* 1000px — наибольшая ширина окна мини-игры, 290px — левая панель с отступами */
+  .eve-board { width: min(calc((100vh - 70px) * 1.786), calc(min(1000px, 100vw - 40px) - 290px)); }
+}
+
+/* Телефон горизонтально (844×390) и другие очень низкие экраны: ещё компактнее */
+@media (max-height: 560px) {
+  .eve-side .minigame__title { font-size: 22px; }
+  .eve-goal { display: none; }                 /* задание уже прочитано на экране перед раундом */
+  .eve-board { width: min(calc((100vh - 36px) * 1.786), calc(100vw - 280px)); }
+  .eve-dev__badge { top: -9px; right: -9px; }
+  .eve-legend { gap: 4px var(--space-m); }
+  .eve-legend .eve-badge { width: 26px; height: 26px; }
+  .eve-summary { font-size: var(--font-size-base); }
+  .eve-summary li { margin: 2px 0; }
+}
+
+/* Большие интерактивные панели */
+@media (min-width: 1800px) {
+  .eve-board { width: min(100%, calc((100vh - 470px) * 1.786)); }
+  .eve-status .mini-meter { width: 300px; }
+  .eve-legend .eve-badge { width: 40px; height: 40px; }
+}
+@media (min-width: 2400px) {
+  .eve-board { width: min(100%, calc((100vh - 600px) * 1.786)); }
+  .eve-dev { width: clamp(48px, 8.6%, 150px); }
+  .eve-status .mini-meter { width: 380px; }
+  .eve-legend .eve-badge { width: 52px; height: 52px; }
+}
+
+/* --- Трубопровод (js/minigames/pipes.js) --- */
+/* --- Трубопровод (js/minigames/pipes.js) ---
+   Слева поле с трубами, справа задание, список целей, время и кнопки.
+   Размер клетки --pc считается от размера окна: поле всегда влезает без прокрутки.
+   --cols и --rows (ширина и высота поля в клетках) ставит pipes.js. */
+.pipes {
+  --pc: min(calc((100vh - 170px) / var(--rows)), calc((100vw - 560px) / var(--cols)), 96px);
+  display: grid;
+  grid-template-columns: auto minmax(240px, 1fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas: "board head" "board foot";
+  gap: var(--space-s) var(--space-l);
+  width: 100%;
+  align-items: start;
+  text-align: left;
+}
+.pipes__head { grid-area: head; display: flex; flex-direction: column; gap: var(--space-s); }
+.pipes__head .minigame__title { margin: 0; }
+.pipes__task { font-weight: 700; }
+.pipes__rules { margin: 0; font-size: var(--font-size-s); color: var(--color-text-muted); }
+
+/* Цели: значок «готово» (кружок с галочкой) или пустой кружок + картинка + подпись */
+.pipes__goals { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.pipes__goal {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 40px; padding: 2px 12px 2px 6px;
+  border: 2px solid var(--color-line); border-radius: var(--radius-round);
+  background: var(--color-surface-alt); font-weight: 700;
+}
+.pipes__goal > .icon { width: 24px; height: 24px; color: var(--color-text-muted); flex: none; }
+.pipes__goal.is-done { border-color: var(--color-good); background: #e3f6ec; }
+.pipes__goal.is-done > .icon { color: var(--color-good); }
+.pipes__goal--leaks:not(.is-done) { border-color: var(--color-bad); background: #fff1e0; }
+.pipes__goal--leaks:not(.is-done) > .icon { color: var(--color-bad); }
+.pipes__goal-pic { width: 32px; height: 32px; flex: none; }
+
+/* Поле */
+.pipes__board-wrap { grid-area: board; padding: 6px; }
+.pipes__board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--pc));
+  grid-template-rows: repeat(var(--rows), var(--pc));
+  border: 4px solid var(--color-line);
+  border-radius: var(--radius-m);
+  background: #e3e8ee;
+}
+.pipes--agro .pipes__board { background: #e2f2d5; }   /* теплица — зелёная земля */
+.pipes__board.is-done { box-shadow: 0 0 0 5px #9fd8f0; }
+.pipes__cell {
+  position: relative;
+  width: var(--pc); height: var(--pc);
+  margin: 0; padding: 0;
+  border: 1px dashed rgba(43, 58, 74, .2);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;          /* без задержки и зума при касании */
+  -webkit-tap-highlight-color: transparent;
+}
+.pipes__cell.is-empty, .pipes__cell.is-fixed { cursor: default; }
+.pipes__cell.is-fixed { background: rgba(255, 246, 214, .9); }
+.pipes__cell:focus { outline: none; }
+.pipes__cell:focus-visible { outline: 4px solid var(--color-focus); outline-offset: -4px; z-index: 2; }
+@media (hover: hover) {
+  .pipes__cell:not(.is-fixed):not(.is-empty):hover { background: rgba(255, 255, 255, .55); }
+}
+.pipes__board.is-done .pipes__cell { cursor: default; }
+.pipes__piece, .pipes__special { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.pipes__board.is-ready .pipes__piece { transition: transform .18s ease-out; }
+
+/* Вода: пузырьки бегут по течению, значок капли в углу клетки (не только цвет) */
+.pipes__flow { stroke-dasharray: 3 13; animation: pipes-flow .6s linear infinite; }
+@keyframes pipes-flow { to { stroke-dashoffset: -16; } }
+.pipes__drop {
+  position: absolute; top: 2px; right: 2px;
+  display: none; align-items: center; justify-content: center;
+  width: 26px; height: 26px;
+  border: 2px solid var(--color-line); border-radius: 50%;
+  background: #fff; color: var(--color-water);
+  pointer-events: none;
+}
+.pipes__cell.is-wet .pipes__drop { display: flex; }
+.pipes__drop .icon { width: 16px; height: 16px; }
+.pipes__lock { position: absolute; left: 3px; bottom: 1px; width: 20px; height: 20px; color: var(--color-text-muted); pointer-events: none; }
+.pipes__lock .icon { width: 18px; height: 18px; }
+.pipes__spin { transform-origin: 50px 46px; animation: pipes-spin 1s linear infinite; }
+@keyframes pipes-spin { to { transform: rotate(360deg); } }
+.pipes__steam { animation: pipes-steam 1.6s ease-in-out infinite; }
+@keyframes pipes-steam { 50% { transform: translateY(-4px); opacity: .7; } }
+
+/* Утечка: жёлтый треугольник «!» и падающие капли на краю клетки */
+.pipes__leaks { position: absolute; inset: 0; pointer-events: none; }
+.pipes__leak {
+  position: absolute; z-index: 3;
+  width: calc(var(--pc) * .46); height: calc(var(--pc) * .6);
+  transform: translate(-50%, -50%);
+}
+.pipes__leak svg { width: 100%; height: 100%; overflow: visible; }
+.pipes__drip { animation: pipes-drip 1s ease-in infinite; }
+.pipes__drip--late { animation-delay: .5s; }
+@keyframes pipes-drip { from { transform: translateY(-3px); opacity: 1; } to { transform: translateY(9px); opacity: 0; } }
+
+/* Время, повороты, кнопки, итог */
+.pipes__foot { grid-area: foot; display: flex; flex-direction: column; gap: var(--space-s); }
+.pipes__stats { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-l); font-size: var(--font-size-base); }
+.pipes__stat { display: inline-flex; align-items: center; gap: 6px; }
+.pipes__stat .icon { width: 24px; height: 24px; color: var(--color-primary-dark); }
+.pipes .panel__buttons { justify-content: flex-start; }
+.pipes__summary { margin: 0; padding-left: 1.2em; font-size: var(--font-size-base); }
+.pipes__summary li { margin: 2px 0; }
+
+/* Невысокие экраны (ноутбук 1366×768): чуть меньше отступов */
+@media (max-height: 800px) {
+  .pipes { --pc: min(calc((100vh - 130px) / var(--rows)), calc((100vw - 560px) / var(--cols)), 96px); }
+  .pipes__head .minigame__title { font-size: 34px; }
+}
+
+/* Телефон вертикально и узкие окна: задание сверху, поле, потом время и кнопки */
+@media (max-width: 640px) {
+  .pipes {
+    --pc: max(48px, min(calc((100vw - 56px) / var(--cols)), calc((100vh - 380px) / var(--rows)), 80px));
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    grid-template-areas: "head" "board" "foot";
+    justify-items: center;
+    text-align: center;
+  }
+  .pipes__head .minigame__title { font-size: var(--font-size-xl); }
+  .pipes__goals, .pipes__stats, .pipes .panel__buttons { justify-content: center; }
+  .pipes__summary { text-align: left; }
+  .pipes__drop { width: 22px; height: 22px; }
+  .pipes__lock { display: none; }
+}
+
+/* Телефон горизонтально (844×390): поле слева во всю высоту, справа всё остальное — компактно */
+@media (max-height: 560px) {
+  .pipes {
+    --pc: max(44px, min(calc((100vh - 46px) / var(--rows)), calc((100vw - 470px) / var(--cols)), 80px));
+    grid-template-columns: auto minmax(200px, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "board head" "board foot";
+    justify-items: stretch;
+    text-align: left;
+    gap: 4px var(--space-s);
+  }
+  .pipes__board-wrap { padding: 2px; }
+  .pipes__board { border-width: 3px; }
+  .pipes__head { gap: 4px; }
+  .pipes__head .minigame__title { font-size: 22px; }
+  .pipes__task { font-size: var(--font-size-base); }
+  .pipes__rules .pipes__keys { display: none; }   /* на телефоне клавиатуры нет */
+  .pipes__goals { gap: 4px; }
+  .pipes__goal { min-height: 34px; padding: 0 8px 0 4px; }
+  .pipes__goal-pic { width: 26px; height: 26px; }
+  .pipes__goals, .pipes__stats, .pipes .panel__buttons { justify-content: flex-start; }
+  .pipes__foot { gap: 4px; }
+  .pipes .panel__buttons .btn { flex: 0 1 auto; min-height: 48px; }
+  .pipes__drop { width: 22px; height: 22px; top: 1px; right: 1px; }
+  .pipes__drop .icon { width: 14px; height: 14px; }
+  .pipes__lock { display: none; }
+  .pipes.is-over .pipes__goals { display: none; }   /* итог: цели и так видны на поле — место тексту */
+  .pipes.is-over .pipes__task { font-weight: 600; line-height: 1.3; }
+  .pipes__summary li { margin: 0; }
+}
+
+/* Маленький телефон горизонтально (640×360 и т. п.): правая колонка уже, чтобы клетки были не меньше 48 px */
+@media (max-height: 560px) and (max-width: 700px) {
+  .pipes { --pc: max(44px, min(calc((100vh - 46px) / var(--rows)), calc((100vw - 330px) / var(--cols)), 80px)); }
+  .pipes__rules { display: none; }
+}
+
+/* Большие интерактивные панели: клетки и значки крупнее */
+@media (min-width: 1800px) {
+  .pipes { --pc: min(calc((100vh - 200px) / var(--rows)), calc((100vw - 900px) / var(--cols)), 130px); gap: var(--space-m) var(--space-xl); }
+  .pipes__goal { min-height: 52px; }
+  .pipes__goal > .icon, .pipes__stat .icon { width: 30px; height: 30px; }
+  .pipes__goal-pic { width: 42px; height: 42px; }
+  .pipes__drop { width: 34px; height: 34px; }
+  .pipes__drop .icon { width: 22px; height: 22px; }
+  .pipes__lock, .pipes__lock .icon { width: 26px; height: 26px; }
+}
+@media (min-width: 2400px) {
+  .pipes { --pc: min(calc((100vh - 260px) / var(--rows)), calc((100vw - 1200px) / var(--cols)), 170px); }
+  .pipes__goal-pic { width: 54px; height: 54px; }
+  .pipes__drop { width: 44px; height: 44px; }
+  .pipes__drop .icon { width: 28px; height: 28px; }
+}
+
+/* --- Энергоэтикетка (js/minigames/label.js) --- */
+/* --- Энергоэтикетка (магазин техники), js/minigames/label.js --- */
+/* Экран правил: пример этикетки и как её читать */
+.lbl-intro { display: flex; align-items: center; justify-content: center; gap: var(--space-l); max-width: 760px; text-align: left; }
+.lbl-intro__label { flex: 0 0 auto; width: 130px; height: 150px; }
+.lbl-intro__howto { margin: 0; font-size: var(--font-size-base); }
+.lbl-units { margin: 0; font-size: var(--font-size-s); color: var(--color-text-muted); }
+
+/* Строка «Нужно места» в задании раунда */
+.lbl-need { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; white-space: nowrap; }
+
+/* Полка с товарами */
+.lbl-shelf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-m); width: 100%; }
+.lbl-card {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  min-height: 48px; padding: var(--space-s) var(--space-s) var(--space-m);
+  border: 3px solid var(--color-line); border-radius: var(--radius-m);
+  background: var(--color-surface-alt); color: var(--color-text);
+  font: inherit; font-size: var(--font-size-base); cursor: pointer;
+  box-shadow: 0 4px 0 var(--color-shadow);
+}
+.lbl-card:active { transform: translateY(2px); box-shadow: none; }
+@media (hover: hover) { .lbl-card:hover { background: #e7f1fb; } }
+.lbl-card:focus-visible { outline: 4px solid var(--color-focus); outline-offset: 3px; }
+/* Выбранный товар: толстая синяя рамка + значок-галочка (не только цвет) */
+.lbl-card.is-selected { border-width: 5px; border-color: var(--color-primary); background: #e3f0ff; padding: calc(var(--space-s) - 2px) calc(var(--space-s) - 2px) calc(var(--space-m) - 2px); }
+.lbl-card__check { position: absolute; top: 6px; right: 6px; display: none; color: var(--color-primary); }
+.lbl-card__check .icon { width: 34px; height: 34px; }
+.lbl-card.is-selected .lbl-card__check { display: block; }
+.lbl-card__name { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: var(--font-size-l); color: var(--color-primary-dark); }
+.lbl-card__pics { display: flex; align-items: flex-end; justify-content: center; gap: var(--space-s); }
+.lbl-card__pic { width: 92px; height: 101px; }
+.lbl-card__label { width: 112px; height: 129px; }
+.lbl-card__row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; min-height: 28px; }
+.lbl-card__row b { font-size: var(--font-size-l); }
+.lbl-coin { width: 24px; height: 24px; color: var(--color-budget); }
+.lbl-bolts { display: inline-flex; flex-wrap: wrap; }
+.lbl-bolt { width: 20px; height: 22px; color: var(--color-electricity); stroke: var(--color-line); stroke-width: 1.2; }
+
+/* Размер: квадратики (закрашенный — занято, пустой — нет) */
+.lbl-size { display: inline-flex; gap: 3px; }
+.lbl-size__box { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--color-line); border-radius: 3px; background: #fff; }
+.lbl-size__box.is-on { background: var(--color-water); }
+
+/* График «цена + электроэнергия за N лет» */
+.lbl-chart { display: flex; flex-direction: column; gap: var(--space-s); width: 100%; }
+.lbl-chart__title { margin: 0; font-weight: 800; font-size: var(--font-size-l); }
+.lbl-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px var(--space-l); }
+.lbl-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.lbl-swatch { display: inline-block; width: 30px; height: 18px; border: 2px solid var(--color-line); border-radius: 4px; }
+/* Цена — точки на жёлтом, электроэнергия — косые полосы на оранжевом: различаются узором, а не только цветом */
+.lbl-swatch--price, .lbl-row__price { background: radial-gradient(circle at 4px 4px, #fff3c4 2px, var(--color-budget) 2.5px) 0 0 / 8px 8px; }
+.lbl-swatch--use, .lbl-row__use { background: repeating-linear-gradient(45deg, var(--color-heat) 0 7px, #f9b089 7px 12px); }
+/* Все строки графика — в одной общей сетке (subgrid), чтобы полоски у всех были одной ширины и масштаба.
+   Старые браузеры без subgrid берут запасные фиксированные колонки из .lbl-row. */
+.lbl-rows { display: grid; grid-template-columns: auto 1fr auto auto; gap: var(--space-s); }
+.lbl-row {
+  grid-column: 1 / -1;
+  display: grid; grid-template-columns: 170px 1fr 52px 330px; grid-template-columns: subgrid;
+  align-items: center; gap: var(--space-s);
+  padding: 4px var(--space-s); border: 3px solid transparent; border-radius: var(--radius-s);
+  text-align: left;
+}
+.lbl-row.is-chosen { border-color: var(--color-primary); background: #e3f0ff; }
+.lbl-row__who { display: flex; align-items: center; gap: 6px; font-weight: 700; white-space: nowrap; }
+.lbl-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 34px; height: 34px; padding: 0 4px;
+  border: 2px solid var(--color-line); border-radius: 6px; font-weight: 900;
+}
+.lbl-row__bar { display: flex; height: 28px; border: 2px solid var(--color-line); border-radius: 6px; background: #eef2f6; overflow: hidden; }
+.lbl-row__price, .lbl-row__use { display: block; width: 0; height: 100%; transition-property: width; transition-timing-function: ease-out; }
+.lbl-row__price { border-right: 2px solid var(--color-line); }
+.lbl-row__total { font-size: var(--font-size-l); text-align: right; }
+.lbl-row__tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.lbl-tag {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+  border: 2px solid currentColor; border-radius: var(--radius-round);
+  font-weight: 700; white-space: nowrap; background: #fff;
+}
+.lbl-tag .icon { width: 20px; height: 20px; }
+.lbl-tag--best { color: var(--color-good); }
+.lbl-tag--chosen { color: var(--color-primary-dark); }
+
+/* Итог: прибор + значок результата по каждому раунду */
+.lbl-sum { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-m); }
+.lbl-sum__item { position: relative; display: inline-block; width: 84px; height: 92px; }
+.lbl-sum__item > svg:first-child { width: 100%; height: 100%; }
+.lbl-sum__item .icon { position: absolute; right: -8px; bottom: -4px; width: 36px; height: 36px; background: #fff; border-radius: 50%; }
+.lbl-sum__item--best .icon { color: var(--color-good); }
+.lbl-sum__item--second .icon { color: #9a6c00; }
+.lbl-sum__item--worst .icon { color: var(--color-bad); }
+
+/* Невысокие экраны (ноутбук 1366×768) */
+@media (max-height: 800px) {
+  .lbl-card__pic { width: 78px; height: 86px; }
+  .lbl-card__label { width: 96px; height: 111px; }
+  .lbl-intro__label { width: 110px; height: 127px; }
+}
+
+/* Телефон вертикально и узкие окна: товары друг под другом, рисунки слева */
+@media (max-width: 640px) {
+  .lbl-intro { flex-direction: column; text-align: center; gap: var(--space-s); }
+  .lbl-shelf { grid-template-columns: 1fr; gap: var(--space-s); }
+  .lbl-card { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "pics name" "pics r1" "pics r2" "pics r3"; align-items: center; justify-items: start; column-gap: var(--space-s); row-gap: 0; padding: var(--space-s); }
+  .lbl-card.is-selected { padding: calc(var(--space-s) - 2px); }
+  .lbl-card__pics { grid-area: pics; }
+  .lbl-card__name { grid-area: name; }
+  .lbl-card__pic { width: 56px; height: 62px; }
+  .lbl-card__label { width: 70px; height: 81px; }
+  .lbl-rows { grid-template-columns: auto 1fr auto; }
+  .lbl-row { grid-template-columns: 120px 1fr 44px; grid-template-columns: subgrid; }
+  .lbl-row__tags { grid-column: 1 / -1; }
+  .lbl-row__who { white-space: normal; }
+}
+
+/* Телефон горизонтально (844×390): всё должно влезть без прокрутки */
+@media (max-height: 560px) {
+  .lbl-intro { gap: var(--space-m); }
+  .lbl-intro__label { width: 80px; height: 92px; }
+  .lbl-units { line-height: 1.2; }
+  .lbl-task { line-height: 1.25; }
+  .lbl-shelf { gap: var(--space-s); }
+  .lbl-card { gap: 0; padding: 2px var(--space-s) 4px; }
+  .lbl-card.is-selected { padding: 0 calc(var(--space-s) - 2px) 2px; }
+  .lbl-card__name { font-size: var(--font-size-base); }
+  .lbl-card__pic { width: 54px; height: 59px; }
+  .lbl-card__label { width: 66px; height: 76px; }
+  .lbl-card__row { min-height: 24px; }
+  .lbl-card__row b { font-size: var(--font-size-base); }
+  .lbl-card__check .icon { width: 26px; height: 26px; }
+  .lbl-bolt { width: 16px; height: 18px; }
+  .lbl-coin { width: 20px; height: 20px; }
+  .lbl-chart { gap: 2px; }
+  .lbl-chart__title { font-size: var(--font-size-base); }
+  .lbl-rows { gap: 2px; }
+  .lbl-rows { gap: 2px var(--space-s); }
+  .lbl-row { padding: 0 var(--space-s); }
+  .lbl-badge { min-width: 28px; height: 28px; }
+  .lbl-row__bar { height: 22px; }
+  .lbl-row__total { font-size: var(--font-size-base); }
+  .lbl-tag { padding: 0 6px; }
+  .lbl-sum__item { width: 60px; height: 66px; }
+  .lbl-sum__item .icon { width: 28px; height: 28px; }
+}
+
+/* Большие интерактивные панели: крупнее рисунки и этикетки */
+@media (min-width: 1800px) {
+  .lbl-card__pic { width: 120px; height: 132px; }
+  .lbl-card__label { width: 150px; height: 173px; }
+  .lbl-intro__label { width: 170px; height: 196px; }
+  .lbl-bolt { width: 26px; height: 28px; }
+  .lbl-coin { width: 30px; height: 30px; }
+  .lbl-row__bar { height: 36px; }
+  .lbl-badge { min-width: 42px; height: 42px; }
+  .lbl-sum__item { width: 110px; height: 121px; }
+}
+@media (min-width: 1800px) and (max-height: 800px) {
+  .lbl-card__pic { width: 92px; height: 101px; }
+  .lbl-card__label { width: 112px; height: 129px; }
+}
+
 /* ===================== Демо-режим ===================== */
 .demo-banner {
   position: fixed;

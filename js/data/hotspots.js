@@ -345,6 +345,7 @@ EB.data.hotspots = {
       tick: { everyMs: 3000, effect: { kwh: 0.07, budget: -0.5 } },
       actions: [
         { key: 'merge', correct: true, effect: {}, save: 14 },
+        { key: 'replace', correct: true, effect: { budget: -10 }, save: 14, minigame: 'label' },
         { key: 'colder', correct: false, effect: { consumption: 3, budget: -3 } },
         { key: 'leave', correct: false }
       ]
@@ -353,7 +354,7 @@ EB.data.hotspots = {
       id: 'agro-hose', object: 'agro-hose', zone: 'main', resource: 'water', load: 6,
       tick: { everyMs: 2000, effect: { liters: 3, budget: -0.5 } },
       actions: [
-        { key: 'rain', correct: true, effect: { budget: -3 }, save: 12 },
+        { key: 'rain', correct: true, effect: { budget: -3 }, save: 12, minigame: 'pipes' },
         { key: 'nowater', correct: false, effect: { comfort: -6 } },
         { key: 'leave', correct: false }
       ]
@@ -488,7 +489,7 @@ EB.data.hotspots = {
       id: 'office-pcs', object: 'office-pcs', zone: 'main', resource: 'electricity', load: 7,
       tick: { everyMs: 3000, effect: { kwh: 0.05, budget: -0.5 } },
       actions: [
-        { key: 'sleep', correct: true, effect: {}, save: 12 },
+        { key: 'evening', correct: true, effect: {}, save: 14, minigame: 'evening' },
         { key: 'unplug', correct: false, effect: { comfort: -8, budget: -2 } },
         { key: 'leave', correct: false }
       ]
@@ -612,7 +613,7 @@ EB.data.hotspots = {
       id: 'hosp-pipes', object: 'hosp-pipes', zone: 'main', resource: 'heat', load: 8,
       tick: { everyMs: 2500, effect: { gcal: 0.004, budget: -0.6 } },
       actions: [
-        { key: 'insulate', correct: true, effect: { budget: -6 }, save: 16 },
+        { key: 'insulate', correct: true, effect: { budget: -6 }, save: 16, minigame: 'thermal' },
         { key: 'heatup', correct: false, effect: { consumption: 5, budget: -6 } },
         { key: 'leave', correct: false }
       ]
@@ -761,7 +762,7 @@ EB.data.hotspots = {
       id: 'fac-cooling', object: 'fac-cooling', zone: 'main', resource: 'water', load: 6,
       tick: { everyMs: 2000, effect: { liters: 3, budget: -0.5 } },
       actions: [
-        { key: 'loop', correct: true, effect: { budget: -8 }, save: 16 },
+        { key: 'loop', correct: true, effect: { budget: -8 }, save: 16, minigame: 'pipes' },
         { key: 'less', correct: false, effect: { comfort: -6, budget: -4 } },
         { key: 'leave', correct: false }
       ]

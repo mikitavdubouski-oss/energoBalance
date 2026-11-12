@@ -1,5 +1,5 @@
 /*
-  thermostat.js — мини-игра «Термостат» (уровень «Квартира», проблема «Батарея»).
+  thermostat.js — мини-игра «Термостат» (уровни «Квартира» и «Дом в агрогородке», проблема «Батарея»).
 
   Игрок крутит ручку термостата (тянет мышью или пальцем, либо кнопками − / +, либо стрелками)
   и выставляет температуру для разных ситуаций: день дома, ночь, никого нет дома, проветривание.
@@ -7,6 +7,7 @@
   За каждую ситуацию — оценка 0..1, итог — среднее (качество прохождения).
 
   Диапазоны «хорошей» температуры — в EB.config.minigames.thermostat (помечены [ПРОВЕРИТЬ]).
+  Для разных уровней ситуации могут отличаться: config → minigames.thermostat.byLevel (например, дом в агрогородке).
   Тексты — ключи mg.thermo.* в texts.ru.js.
 
   Подключение: EB.minigames.thermostat.start(контейнер, {onDone: function (result) {...}}),
@@ -35,14 +36,20 @@ EB.minigames.thermostat = {
 
   _cfg: function () { return EB.config.minigames.thermostat; },
 
-  _situation: function () {
-    return this._cfg().situations[this._index];
+  // Ситуации для текущего уровня: свои (config → byLevel[уровень]) или общие (config → situations)
+  _situations: function () {
+    var c = this._cfg();
+    return (c.byLevel && c.byLevel[EB.game.levelId]) || c.situations;
   },
 
-  // Комфорт для людей в комнате. «Никого нет» и «проветривание» — людей в комнате нет.
+  _situation: function () {
+    return this._situations()[this._index];
+  },
+
+  // Комфорт для людей в комнате. У ситуаций с empty: true («никого нет», «проветривание») людей в комнате нет.
   _comfort: function (t) {
     var s = this._situation();
-    if (s.key === 'away' || s.key === 'airing') return null;
+    if (s.empty) return null;
     var mid = (s.good[0] + s.good[1]) / 2;
     return EB.utils.clamp(Math.round(100 - Math.abs(t - mid) * 12), 0, 100);
   },
@@ -62,7 +69,7 @@ EB.minigames.thermostat = {
   _render: function () {
     var self = this;
     var s = self._situation();
-    var total = self._cfg().situations.length;
+    var total = self._situations().length;
     self._box.innerHTML =
       '<h2 class="minigame__title">' + EB.t('mg.thermo.title') + '</h2>' +
       '<p class="minigame__step">' + EB.t('mg.step', { n: self._index + 1, total: total }) + '</p>' +
@@ -182,7 +189,7 @@ EB.minigames.thermostat = {
     fb.textContent = EB.t(verdict) + ' ' + EB.t('mg.thermo.' + s.key + '.why');
     fb.className = 'minigame__feedback is-' + (score >= 0.99 ? 'good' : 'bad');
     var btn = self._box.querySelector('[data-mg="ok"]');
-    var last = self._index >= self._cfg().situations.length - 1;
+    var last = self._index >= self._situations().length - 1;
     btn.textContent = EB.t(last ? 'mg.finish' : 'mg.next');
     btn.replaceWith(btn.cloneNode(true)); // снять старый обработчик
     btn = self._box.querySelector('[data-mg="ok"]');

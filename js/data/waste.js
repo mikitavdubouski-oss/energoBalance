@@ -8,6 +8,9 @@
   items — предметы: id, значок (emoji), в какой контейнер (bin).
           Название предмета — ключ waste.<id>, пояснение при ошибке — waste.<id>.why.
 
+  sets  — свой набор предметов для уровня (ключ — id уровня). Если для уровня набора нет — берутся все items.
+          В наборе должно быть не меньше предметов, чем на «сложном» уровне сортировки (config.js → minigames.sorting).
+
   Как добавить предмет: допиши строку в items и два текста в texts.ru.js (и texts.be.js).
   Значок можно заменить картинкой: вместо эмодзи укажи путь, например icon: 'assets/svg/waste/newspaper.svg'
   (список имён — в assets/README.md).
@@ -53,6 +56,21 @@ EB.data.waste = {
     { id: 'accu',       icon: '🔋', bin: 'batteries' },
     // Опасные отходы
     { id: 'cfl',        icon: '💡', bin: 'hazardous' },
-    { id: 'thermometer', icon: '🌡️', bin: 'hazardous' }
-  ]
+    { id: 'thermometer', icon: '🌡️', bin: 'hazardous' },
+
+    // ---------- Предметы супермаркета (только в наборе shop) ----------
+    { id: 'egg-tray',    icon: '🥚', bin: 'paper' },
+    { id: 'milk-bottle', icon: '🍼', bin: 'plastic' },
+    { id: 'yogurt',      icon: '🥛', bin: 'plastic' },
+    { id: 'apple-core',  icon: '🍎', bin: 'mixed' },
+    { id: 'stale-bread', icon: '🍞', bin: 'mixed' }
+  ],
+
+  // Наборы предметов по уровням: в колледже — школьные вещи, в супермаркете — упаковка и продукты
+  sets: {
+    school: ['newspaper', 'cardboard', 'notebook', 'envelope', 'magazines', 'shampoo', 'cup', 'bag', 'bottle', 'jar',
+      'can', 'bolts', 'spoon', 'peel', 'pizza', 'wrapper', 'napkin', 'toothbrush', 'battery', 'accu', 'cfl', 'thermometer'],
+    shop: ['newspaper', 'cardboard', 'magazines', 'egg-tray', 'shampoo', 'cup', 'bag', 'milk-bottle', 'yogurt', 'bottle', 'jar',
+      'can', 'spoon', 'peel', 'wrapper', 'napkin', 'toothbrush', 'apple-core', 'stale-bread', 'battery', 'accu', 'cfl']
+  }
 };

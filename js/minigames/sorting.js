@@ -41,6 +41,13 @@ EB.minigames.sorting = {
     this._finished = true;
   },
 
+  // Предметы для текущего уровня: набор из EB.data.waste.sets[уровень] или, если набора нет, все предметы
+  _items: function () {
+    var set = EB.data.waste.sets && EB.data.waste.sets[EB.game.levelId];
+    if (!set) return EB.data.waste.items;
+    return EB.data.waste.items.filter(function (it) { return set.indexOf(it.id) >= 0; });
+  },
+
   // Правила и выбор сложности
   _renderIntro: function () {
     var self = this;
@@ -49,7 +56,7 @@ EB.minigames.sorting = {
       var L = levels[key];
       return '<button class="sort-level" data-level="' + key + '">' +
         '<b>' + EB.t('mg.sort.level.' + key) + '</b>' +
-        '<span>' + EB.t('mg.sort.level.items', { n: Math.min(L.items, EB.data.waste.items.length) }) + '</span>' +
+        '<span>' + EB.t('mg.sort.level.items', { n: Math.min(L.items, self._items().length) }) + '</span>' +
         '<span>' + EB.t('mg.sort.level.speed.' + key) + '</span>' +
         '<span>' + EB.t('mg.sort.level.points', { n: Math.round(L.points * 100) }) + '</span>' +
         '</button>';
@@ -64,7 +71,7 @@ EB.minigames.sorting = {
         EB.audio.play('click');
         self._L = levels[b.getAttribute('data-level')];
         self._levelKey = b.getAttribute('data-level');
-        self._queue = EB.utils.shuffle(EB.data.waste.items).slice(0, self._L.items);
+        self._queue = EB.utils.shuffle(self._items()).slice(0, self._L.items);
         self._renderGame();
       });
     });
