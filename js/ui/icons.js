@@ -39,7 +39,12 @@ EB.ui.ICONS = {
   // Уровни
   home: '<path d="M3 11 12 3l9 8v10h-6v-6H9v6H3z" fill="currentColor"/>',
   school: '<path d="M12 3 2 8l10 5 8-4v6h2V8z" fill="currentColor"/><path d="M6 12v4c2 2 10 2 12 0v-4l-6 3z" fill="currentColor"/>',
-  city: '<path d="M2 21V10h6V3h8v8h6v10z" fill="currentColor"/><path d="M10 6h1.5v2H10zm3 0h1.5v2H13zm-3 4h1.5v2H10zm3 0h1.5v2H13zM4 13h2v2H4zm14 1h2v2h-2z" fill="#fff"/>'
+  city: '<path d="M2 21V10h6V3h8v8h6v10z" fill="currentColor"/><path d="M10 6h1.5v2H10zm3 0h1.5v2H13zm-3 4h1.5v2H10zm3 0h1.5v2H13zM4 13h2v2H4zm14 1h2v2h-2z" fill="#fff"/>',
+  agro: '<path d="M1 21V12l7.5-6.5L16 12v9h-4.5v-5h-6v5z" fill="currentColor"/><rect x="11.5" y="4" width="2.5" height="5" fill="currentColor"/><rect x="18.4" y="13" width="1.6" height="8" fill="currentColor"/><path d="M19.2 15.5c-2.8 0-4.2-1.8-4.2-4 2.5 0 4.2 1.5 4.2 4zM19.2 13.5c0-2.4 1.5-4 4-4 0 2.4-1.6 4-4 4z" fill="currentColor"/><rect x="1" y="21" width="22" height="1.6" rx=".8" fill="currentColor"/><rect x="4" y="12.5" width="2.5" height="2.5" fill="#fff"/><rect x="10" y="12.5" width="2.5" height="2.5" fill="#fff"/>',
+  shop: '<path d="M1 3h3.6l2.6 11h11.3v2H5.6L3 5H1z" fill="currentColor"/><path d="M6.5 5H22l-2.6 8H8.2z" fill="currentColor"/><path d="M10 7h1.4v4H10zm3.2 0h1.4v4h-1.4zm3.2 0h1.4v4h-1.4z" fill="#fff"/><circle cx="8.5" cy="19.5" r="2" fill="currentColor"/><circle cx="17" cy="19.5" r="2" fill="currentColor"/>',
+  office: '<path d="M9 3h6a2 2 0 0 1 2 2v2h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3V5a2 2 0 0 1 2-2zm0 2v2h6V5z" fill="currentColor"/><rect x="2" y="12" width="20" height="1.6" fill="#fff"/><rect x="10" y="11" width="4" height="3.6" rx="1" fill="#fff"/>',
+  hospital: '<path d="M2 21V8h5V3h10v5h5v13h-7v-4h-6v4z" fill="currentColor"/><path d="M11 5h2v2h2v2h-2v2h-2V9H9V7h2zM4 11h2v2H4zm14 0h2v2h-2zM4 15h2v2H4zm14 0h2v2h-2z" fill="#fff"/>',
+  factory: '<path d="M2 21V11l5 3v-3l5 3v-3l5 3V3h4v18z" fill="currentColor"/><path d="M5 16h2v2H5zm5 0h2v2h-2zm5 0h2v2h-2z" fill="#fff"/>'
 };
 
 // Готовая разметка иконки

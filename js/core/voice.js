@@ -6,6 +6,7 @@
   Порядок выбора:
   1. Если в config.js voiceFiles: true — пробуем файл assets/audio/voice/<id>.mp3
      (id — ключ реплики, см. docs/voice-lines.md). Если файла нет — переходим к п. 2.
+     Реплики, которые ещё не записаны, перечислены в config.js → voiceNotRecorded: для них файл не запрашивается.
   2. Синтез речи браузера (speechSynthesis) с русским или белорусским голосом.
      Сначала ищем голос, установленный в системе (работает без интернета),
      потом — онлайн-голос браузера (например, «Google русский» в Chrome, нужен интернет).
@@ -42,7 +43,9 @@ EB.voice = {
     EB.voice.stop();
     if (volume <= 0) return;
 
-    if (EB.config.voiceFiles) {
+    // Реплики из списка voiceNotRecorded (config.js) ещё не записаны — сразу синтез, без запроса файла
+    var recorded = (EB.config.voiceNotRecorded || []).indexOf(id) < 0;
+    if (EB.config.voiceFiles && recorded) {
       try {
         var lang = EB.i18n.getLang();
         var audio = new Audio('assets/audio/voice/' + (lang === 'ru' ? '' : lang + '/') + id + '.mp3');

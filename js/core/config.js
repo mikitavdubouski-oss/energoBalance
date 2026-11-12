@@ -59,9 +59,15 @@ EB.config = {
   levels: {
     apartment: { problems: [6, 8],  timeSec: 180, hints: 3, difficulty: 1.0 },
     school:    { problems: [10, 12], timeSec: 210, hints: 3, difficulty: 1.3 },
+    agro:      { problems: [7, 9],  timeSec: 200, hints: 3, difficulty: 1.35 },
+    shop:      { problems: [8, 10], timeSec: 200, hints: 3, difficulty: 1.4 },
+    office:    { problems: [8, 10], timeSec: 200, hints: 2, difficulty: 1.45 },
+    hospital:  { problems: [8, 10], timeSec: 200, hints: 2, difficulty: 1.5 },
+    factory:   { problems: [8, 10], timeSec: 210, hints: 2, difficulty: 1.55 },
     city:      { problems: [7, 9],  timeSec: 200, hints: 2, difficulty: 1.6 }
   },
-  levelOrder: ['apartment', 'school', 'city'],
+  // Порядок уровней в меню: каждый следующий открывается, когда предыдущий пройден хотя бы на 1 звезду
+  levelOrder: ['apartment', 'school', 'agro', 'shop', 'office', 'hospital', 'factory', 'city'],
   // Эффект неправильного действия, если у действия в hotspots.js не указан свой effect
   wrongActionDefault: { budget: -3 },
   hintHighlightMs: 3000,  // сколько миллисекунд подсвечивается hotspot после подсказки
@@ -80,18 +86,19 @@ EB.config = {
     maxTips: 3                 // сколько персональных советов показать в итогах
   },
 
-  // Звания в финале: минимальная сумма звёзд за все уровни (максимум 9)
+  // Звания в финале: минимальная сумма звёзд за все уровни (8 уровней × 3 = максимум 24)
   ranks: [
     { minStars: 0, key: 'rank.trainee' },
-    { minStars: 5, key: 'rank.manager' },
-    { minStars: 8, key: 'rank.expert' }
+    { minStars: 13, key: 'rank.manager' },
+    { minStars: 21, key: 'rank.expert' }
   ],
 
   // Медали в финале — по эко-коинам за всю игру (3 места). Медаль получает каждый, кто дошёл до финала.
-  // Пороги подобраны прогоном: идеальная игра ≈ 75–80 монет, средняя ≈ 40. Уточнить после теста с учениками.
+  // Пороги подобраны прогоном всех 8 уровней: идеальная игра ≈ 220–225 монет (золото ≈ 75% от неё,
+  // серебро ≈ 50%). Уточнить после теста с учениками.
   medals: [
-    { place: 1, key: 'gold',   minCoins: 60 },
-    { place: 2, key: 'silver', minCoins: 40 },
+    { place: 1, key: 'gold',   minCoins: 170 },
+    { place: 2, key: 'silver', minCoins: 115 },
     { place: 3, key: 'bronze', minCoins: 0 }
   ],
 
@@ -149,6 +156,15 @@ EB.config = {
   // true — сначала пытаться играть файл assets/audio/voice/<id>.mp3, если его нет — синтез речи
   // Записанные реплики лежат в assets/audio/voice/ (RU) и assets/audio/voice/be/ (BE), список — docs/voice-lines.md
   voiceFiles: true,
+  // Реплики новых уровней ещё не записаны — для них сразу синтез речи (без ошибок «файл не найден» в консоли).
+  // Когда запишете mp3 (имена — в docs/voice-lines.md), удалите id из этого списка.
+  voiceNotRecorded: [
+    'advisor.start.agro', 'advisor.tip.agro',
+    'advisor.start.shop', 'advisor.tip.shop',
+    'advisor.start.office', 'advisor.tip.office',
+    'advisor.start.hospital', 'advisor.tip.hospital',
+    'advisor.start.factory', 'advisor.tip.factory'
+  ],
   speechRate: 1.0,
   speechDelayMs: 80,            // пауза перед синтезом речи (обход ошибки Chrome после cancel)
   advisorBubbleMs: 6000,        // сколько висит облачко реплики

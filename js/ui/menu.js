@@ -13,7 +13,7 @@
 
 EB.ui.menu = {
   SLIDERS: ['sfx', 'music', 'voice'],
-  LEVEL_ICONS: { apartment: 'home', school: 'school', city: 'city' },
+  LEVEL_ICONS: { apartment: 'home', school: 'school', agro: 'agro', shop: 'shop', office: 'office', hospital: 'hospital', factory: 'factory', city: 'city' },
 
   init: function () {
     // Все кнопки с data-action обрабатываем в одном месте

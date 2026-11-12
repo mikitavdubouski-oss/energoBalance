@@ -78,9 +78,14 @@
 | Файл | Что внутри | Объекты (id в SVG) |
 |---|---|---|
 | `js/scenes/apartment.scene.js` | `EB.scenes.apartment` — квартира | `obj-chandelier`, `obj-floorlamp`, `obj-tv`, `obj-computer`, `obj-charger`, `obj-fridge`, `obj-washer`, `obj-kettle`, `obj-tap-kitchen`, `obj-tap-bath`, `obj-radiator`, `obj-window`, `obj-boiler` |
-| `js/scenes/school.scene.js` | `EB.scenes.schoolClass` — класс | `obj-class-lights`, `obj-class-window`, `obj-projector`, `obj-computers`, `obj-class-radiator` |
+| `js/scenes/school.scene.js` | `EB.scenes.schoolClass` — колледж: класс | `obj-class-lights`, `obj-class-window`, `obj-projector`, `obj-computers`, `obj-class-radiator` |
 | | `EB.scenes.schoolCorridor` — коридор | `obj-corridor-lights`, `obj-corridor-door`, `obj-corridor-window`, `obj-fountain`, `obj-vending` |
 | | `EB.scenes.schoolCanteen` — столовая | `obj-canteen-tap`, `obj-dishwasher`, `obj-canteen-fridge`, `obj-stove`, `obj-waste-bins` |
+| `js/scenes/agro.scene.js` | `EB.scenes.agro` — дом в агрогородке | `obj-agro-attic`, `obj-agro-boiler`, `obj-agro-window`, `obj-agro-radiator`, `obj-agro-waterheater`, `obj-agro-woodpile`, `obj-agro-yard-lamp`, `obj-agro-shed-light`, `obj-agro-freezer`, `obj-agro-hose`, `obj-agro-pump`, `obj-agro-compost`, `obj-agro-dog` |
+| `js/scenes/shop.scene.js` | `EB.scenes.shop` — супермаркет | `obj-shop-entrance`, `obj-shop-window-lights`, `obj-shop-fridge`, `obj-shop-oven`, `obj-shop-tap`, `obj-shop-storage-door`, `obj-shop-carts`, `obj-shop-conveyor`, `obj-shop-bags`, `obj-shop-scales`, `obj-shop-freezer`, `obj-shop-food-waste`, `obj-shop-cardboard` |
+| `js/scenes/office.scene.js` | `EB.scenes.office` — офис | `obj-office-tap`, `obj-office-coffee`, `obj-office-blinds`, `obj-office-ac`, `obj-office-pcs`, `obj-office-heater`, `obj-office-printer`, `obj-office-meeting-light`, `obj-office-board`, `obj-office-plant`, `obj-office-chargers`, `obj-office-paper-bin`, `obj-office-cartridges` |
+| `js/scenes/hospital.scene.js` | `EB.scenes.hospital` — больница | `obj-hosp-roof`, `obj-hosp-window`, `obj-hosp-monitor`, `obj-hosp-lift`, `obj-hosp-office-light`, `obj-hosp-tap`, `obj-hosp-med-fridge`, `obj-hosp-med-waste`, `obj-hosp-door`, `obj-hosp-bins`, `obj-hosp-lamps`, `obj-hosp-laundry`, `obj-hosp-pipes` |
+| `js/scenes/factory.scene.js` | `EB.scenes.factory` — завод | `obj-fac-gate`, `obj-fac-furnace`, `obj-fac-skylights`, `obj-fac-pipes`, `obj-fac-safety-board`, `obj-fac-extinguisher`, `obj-fac-cooling`, `obj-fac-conveyor`, `obj-fac-pallets`, `obj-fac-scrap`, `obj-fac-air-hose`, `obj-fac-compressor`, `obj-fac-fan` |
 | `js/scenes/city.scene.js` | `EB.scenes.city` — мини-город | `obj-street-lamps`, `obj-old-lamp`, `obj-facade`, `obj-roof`, `obj-entrance-door`, `obj-stair-light`, `obj-heat-pipe`, `obj-sprinkler`, `obj-garbage`, `obj-wind-site` |
 
 ### Как заменить сцену своим рисунком (например, из Inkscape или Figma)

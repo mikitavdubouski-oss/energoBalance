@@ -134,7 +134,7 @@ EB.levels.dacha = {
 };
 ```
 
-Несколько зон, как в школе: `zones: [{id: 'house', scene: 'dachaHouse'}, {id: 'garden', scene: 'dachaGarden'}]`
+Несколько зон, как в колледже (уровень school): `zones: [{id: 'house', scene: 'dachaHouse'}, {id: 'garden', scene: 'dachaGarden'}]`
 и тексты `zone.house`, `zone.garden`.
 
 **Шаг 3. Проблемы.** В `js/data/hotspots.js` добавьте пул `dacha: [ ... ]` (см. раздел 1).
@@ -146,10 +146,13 @@ levels: {
   ...,
   dacha: { problems: [5, 7], timeSec: 180, hints: 3, difficulty: 1.2 }
 },
-levelOrder: ['apartment', 'school', 'city', 'dacha'],
+levelOrder: ['apartment', 'school', 'agro', 'shop', 'office', 'hospital', 'factory', 'city', 'dacha'],
 ```
 
-Если уровней больше трёх, поправьте пороги званий в `ranks` (максимум звёзд = число уровней × 3).
+При изменении числа уровней поправьте пороги званий в `ranks` (максимум звёзд = число уровней × 3) и медалей в `medals`
+(идеальная игра на 8 уровнях даёт ≈ 224 эко-коина). Чтобы ключи текстов не пересекались с другими уровнями,
+начинайте id объектов и проблем с приставки уровня (`dacha-…`), как у agro-, shop-, office-, hosp-, fac-.
+Пока реплики Советника нового уровня не записаны, впишите их id в `voiceNotRecorded` (config.js).
 
 **Шаг 5. Тексты.** В `texts.ru.js`: `level.dacha`, `level.dacha.desc`, `level.dacha.task`,
 `advisor.start.dacha`, `advisor.tip.dacha`, тексты проблем. Иконку карточки уровня можно задать в
