@@ -244,7 +244,10 @@ h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
 
 /* ===================== Главное меню ===================== */
 .menu { display: flex; flex-direction: column; align-items: center; gap: var(--space-m); text-align: center; }
-.menu__logo { width: 240px; height: 110px; object-fit: contain; }
+/* Эмблема колледжа и его название в одну строку (цвет — фиолетовый с эмблемы) */
+.menu__brand { display: flex; align-items: center; justify-content: center; gap: var(--space-m); }
+.menu__logo { width: auto; height: 96px; object-fit: contain; }
+.menu__college { white-space: pre-line; text-align: center; font-size: 18px; font-weight: 700; line-height: 1.25; color: #3d2d70; }
 .menu__title { margin: 0; font-size: var(--font-size-xxl); color: var(--color-primary-dark); text-shadow: 0 4px 0 #fff; }
 .menu__subtitle { margin: 0 0 var(--space-s); font-size: var(--font-size-l); color: var(--color-text-muted); font-weight: 600; }
 .menu__buttons { display: flex; flex-direction: column; align-items: center; gap: var(--space-m); }
@@ -1567,7 +1570,7 @@ h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
 @media (max-height: 800px) {
   .screen { padding: var(--space-m); }
   .menu, .menu__buttons, .panel { gap: var(--space-s); }
-  .menu__logo { height: 80px; }
+  .menu__logo { height: 64px; }
   .btn { padding: var(--space-s) var(--space-l); }
   .panel { padding: var(--space-m) var(--space-l); }
   .level-card { min-height: 0; padding-top: var(--space-m); gap: 4px; }
@@ -1632,7 +1635,8 @@ h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
   .screen { padding: var(--space-s); }
   .panel { padding: var(--space-s) var(--space-m); gap: var(--space-s); border-width: 3px; }
   .menu { gap: 4px; }
-  .menu__logo { height: 52px; width: 120px; }
+  .menu__logo { height: 44px; width: auto; }
+  .menu__college { font-size: 16px; }
   .menu__subtitle { margin: 0; }
   .menu__buttons { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-s); }
   .menu__buttons .btn { width: min(260px, 40vw); }

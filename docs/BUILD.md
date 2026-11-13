@@ -4,7 +4,7 @@
 
 - [ ] В `js/core/config.js`: `debug: false` (отладочные команды не создаются).
 - [ ] В `js/core/config.js`: `hideUnverifiedFacts: true`, если остались непроверенные факты.
-- [ ] Заглушки заменены: логотип (`assets/logo/logo.svg`), авторы и учреждение (`about.authors` в `texts.ru.js` и `texts.be.js`).
+- [ ] Заглушки заменены: авторы (`about.authors` в `texts.ru.js` и `texts.be.js`: учащиеся и руководитель; логотип и учреждение уже стоят — колледж).
 - [ ] Пройден `docs/test-checklist.md` хотя бы в Chrome и одном другом браузере.
 - [ ] Нет обращений к сети. Проверка: в Git Bash в папке игры выполнить
       `grep -rnE "https?://|fetch\(|XMLHttpRequest" --include=*.js --include=*.html --include=*.css .`

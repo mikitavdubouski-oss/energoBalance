@@ -47,7 +47,7 @@
 | 2 | **Проверить игровые числа**, похожие на рекомендации: температуры термостата, угол солнечных панелей, набор контейнеров для отходов | педагог | [docs/facts-to-verify.md](docs/facts-to-verify.md) (раздел «Игровые числа»), [js/core/config.js](js/core/config.js), [js/data/waste.js](js/data/waste.js) | 9.1 |
 | 3 | **Проверить белорусские термины**: из старого списка педагог решил 8 (отмечены ✅, два — «сціраць» и «дранка» — стоит уточнить ещё раз); **≈ 50 новых** из 5 новых уровней; единица «кВт·ч» | педагог (белорусский язык) | [docs/be-terms-to-check.md](docs/be-terms-to-check.md), [js/data/texts.be.js](js/data/texts.be.js) | 9.2 |
 | 4 | **Вписать авторов, руководителя, учреждение** вместо заглушек | педагог | ключ `about.authors` в [texts.ru.js](js/data/texts.ru.js) и [texts.be.js](js/data/texts.be.js); шапка и раздел 7 [записки](docs/poyasnitelnaya-zapiska.md) | 9.3 |
-| 5 | **Положить логотип «Энергомарафона»** вместо заглушки | педагог | [assets/logo/logo.svg](assets/logo/logo.svg), требования — [assets/README.md](assets/README.md) §1 | 9.3 |
+| 5 | ~~Логотип~~ — ✅ эмблема колледжа с сайта vgik.by (13.11.2026). Если у колледжа есть файл крупнее — заменить `assets/logo/college.png` | педагог | [assets/logo/college.png](assets/logo/college.png) |
 | 6 | **Показать игру ученикам** (точка проверки) и собрать замечания | педагог | — | 9.4 |
 | 7 | **Ручное тестирование**: Edge, Firefox, Яндекс Браузер, сенсорная панель, режимы дальтонизма | ученики | [docs/test-checklist.md](docs/test-checklist.md), [docs/a11y-audit.md](docs/a11y-audit.md) («Что проверить вручную») | 9.5 |
 | 8 | **Снять скриншоты и трейлер** | ученики | [docs/screenshots-trailer.md](docs/screenshots-trailer.md) | — |
@@ -124,7 +124,7 @@
 | Путь | Что |
 |---|---|
 | [assets/README.md](assets/README.md) | **какие файлы можно заменить, имена, форматы, как подключить** |
-| [assets/logo/logo.svg](assets/logo/logo.svg) | заглушка логотипа |
+| [assets/logo/college.png](assets/logo/college.png) | эмблема колледжа в главном меню |
 | [assets/audio/](assets/audio/) | пустые папки `sfx`, `music`, `voice`, `voice/be` для файлов-замен |
 | [assets/svg/](assets/svg/) | место для исходников SVG и значков сортировки (`waste/`) |
 

@@ -41,8 +41,11 @@
     <!-- ============ Главное меню ============ -->
     <section id="screen-menu" class="screen">
       <div class="menu">
-        <!-- Логотип «Энергомарафона»: замени файл assets/logo/logo.svg на настоящий -->
-        <img class="menu__logo" src="assets/logo/logo.svg" data-i18n-alt="logoAlt" alt="">
+        <!-- Эмблема и название колледжа: картинка — assets/logo/college.png, название — ключ college.name в texts.*.js -->
+        <div class="menu__brand">
+          <img class="menu__logo" src="assets/logo/college.png" data-i18n-alt="logoAlt" alt="">
+          <span class="menu__college" data-i18n="college.name"></span>
+        </div>
         <h1 class="menu__title" data-i18n="gameTitle"></h1>
         <p class="menu__subtitle" data-i18n="gameSubtitle"></p>
         <nav class="menu__buttons">

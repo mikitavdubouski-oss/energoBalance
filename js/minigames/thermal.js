@@ -1,7 +1,10 @@
 /*
   thermal.js — мини-игра «Тепловизор» (уровень «Больница», проблема «Голые трубы в подвале»).
 
-  На экране — обычная картинка подвала (спокойные серо-голубые цвета). Игрок водит круглой
+  Помещений три: подвал, палата и вестибюль (ROOMS ниже). Каждый раз берётся случайное помещение,
+  не то же, что в прошлый раз, а в нём — случайные утечки из списка мест. Поэтому игра не повторяется.
+
+  На экране — обычная картинка помещения (спокойные серо-голубые цвета). Игрок водит круглой
   «линзой тепловизора»: под линзой видна тепловая картинка той же сцены
   (холодное — синее и фиолетовое, тёплое — оранжевое, горячее — жёлтое).
   Где тепло уходит зря, над местом идут «волны» (их видно и без различения цветов):
@@ -20,8 +23,9 @@
   Как менять:
     • числа (время, сколько утечек, размер линзы, штрафы) — EB.config.minigames.thermal;
     • тексты — ключи mg.thermal.* в texts.ru.js / texts.be.js;
-    • сцена — объект в SCENES ниже. Сцена выбирается по EB.game.levelId, так что позже можно
-      добавить, например, SCENES.apartment (фасад дома) с тем же форматом, не трогая логику:
+    • какие помещения на каком уровне — ROOMS ниже ({уровень: [помещения]});
+    • помещение — объект в SCENES ниже. Новое помещение добавляется тем же форматом, не трогая логику
+      (и тексты: название mg.thermal.room.<имя>, утечки mg.thermal.leak.<id>, «всё в порядке» mg.thermal.ok.<id>):
         draw(палитра, тепловой?, активные утечки) — рисунок; одна функция для обоих слоёв,
                                                      поэтому обычный и тепловой рисунки всегда совпадают;
         overlays(активные утечки)                 — горячие и холодные пятна с волнами (только тепловой слой);
@@ -33,7 +37,10 @@
 EB.minigames.thermal = {
   W: 800,             // размер рисунка (viewBox)
   H: 450,
-  DEFAULT_SCENE: 'hospital',
+  // Помещения по уровням. Уровня нет в списке — берём DEFAULT_ROOMS.
+  ROOMS: { hospital: ['basement', 'ward', 'lobby'] },
+  DEFAULT_ROOMS: ['basement'],
+  _lastRoom: null,    // помещение прошлой игры — в этот раз берём другое
 
   // Палитры: одна и та же сцена рисуется дважды — обычными цветами и «тепловыми»
   PALETTES: {
@@ -41,13 +48,21 @@ EB.minigames.thermal = {
       line: '#2b3a4a', wall: '#d3dde7', brick: '#bfccd8', ceil: '#8d9eb0', floor: '#a9b7c5', floorLine: '#94a4b4',
       pipe: '#aab8c6', band: '#8797a8', cabinet: '#b9c8d6', gauge: '#ffffff', pump: '#9db1c4', hx: '#c5d2de',
       boiler: '#c4d1dd', boilerTop: '#aebdcb', frame: '#8a9bb0', glass: '#aacde6', door: '#9eafc0',
-      doorPanel: '#b3c2d0', tap: '#9aa9b8', bucket: '#a9b9c9', lamp: '#eef2d8', valve: '#9aaab9', wheel: '#7f90a3'
+      doorPanel: '#b3c2d0', tap: '#9aa9b8', bucket: '#a9b9c9', lamp: '#eef2d8', valve: '#9aaab9', wheel: '#7f90a3',
+      // палата и вестибюль
+      radiator: '#e6edf3', radiatorLine: '#c3cfdb', sill: '#f1f4f7', bed: '#c9d5e1', blanket: '#9cc3e6',
+      pillow: '#f5f8fb', skin: '#f2c9a5', hair: '#8a6a4f', shirt: '#7fb7a4', socket: '#f5f8fb', picture: '#cfe6c4',
+      desk: '#c9a27c', heater: '#e9edf2', board: '#f6f1e3', outside: '#cfe7f7', panel: '#f5f8fb', bulb: '#fff3b0'
     },
     thermal: {
       line: '#0e0a2a', wall: '#2a1d6e', brick: '#33257f', ceil: '#1d1452', floor: '#20165a', floorLine: '#2b1f6c',
       pipe: '#7a2fae', band: '#8e38b5', cabinet: '#d2562f', gauge: '#f08a2e', pump: '#ffb13b', hx: '#f39a34',
       boiler: '#a4389e', boilerTop: '#b8429a', frame: '#3a2c8c', glass: '#2f2380', door: '#33267f',
-      doorPanel: '#3b2d8a', tap: '#463796', bucket: '#3a2c86', lamp: '#5a3aa8', valve: '#7a2fae', wheel: '#5b2f9e'
+      doorPanel: '#3b2d8a', tap: '#463796', bucket: '#3a2c86', lamp: '#5a3aa8', valve: '#7a2fae', wheel: '#5b2f9e',
+      // палата и вестибюль: батарея и люди тёплые (так и надо), остальное — холоднее
+      radiator: '#ff9a2e', radiatorLine: '#ffd23f', sill: '#3a2c8c', bed: '#4a3596', blanket: '#e0602f',
+      pillow: '#c4462f', skin: '#ffd23f', hair: '#ff9a2e', shirt: '#e8742c', socket: '#3b2d8a', picture: '#2f2380',
+      desk: '#3d2c88', heater: '#4a3596', board: '#33257f', outside: '#07061f', panel: '#6b4ab8', bulb: '#6b4ab8'
     }
   },
   HOT: { core: '#fff4a8', hot: '#ffd23f', edge: '#ff8a1f' },
@@ -56,7 +71,7 @@ EB.minigames.thermal = {
   // ======================= Сцены =======================
   SCENES: {
     // Подвал больницы: трубы горячей воды и отопления, тепловой пункт, бак, дверь, окошко
-    hospital: {
+    basement: {
       lensStart: [400, 270],
       leaks: [
         { id: 'pipe',   x: 236, y: 131, r: 40 },   // голый участок трубы
@@ -192,6 +207,224 @@ EB.minigames.thermal = {
         }
         return s;
       }
+    },
+
+    // Палата: окно с форточкой, батарея под подоконником, кровать с пациентом, розетка на наружной стене
+    ward: {
+      lensStart: [560, 250],
+      leaks: [
+        { id: 'corner', x: 44,  y: 50,  r: 44 },   // промерзающий угол под потолком
+        { id: 'wall',   x: 120, y: 184, r: 46 },   // холодная наружная стена
+        { id: 'frame',  x: 232, y: 206, r: 34 },   // щель в оконной раме
+        { id: 'vent',   x: 380, y: 108, r: 38 },   // форточка открыта весь день
+        { id: 'slope',  x: 440, y: 170, r: 34 },   // щель между окном и стеной
+        { id: 'sill',   x: 330, y: 280, r: 30 },   // сквозняк под подоконником
+        { id: 'socket', x: 131, y: 331, r: 30 }    // дует из розетки
+      ],
+      fine: [
+        { id: 'radiator', rects: [[262, 296, 136, 66]], mx: 330, my: 329 },
+        { id: 'person', rects: [[496, 214, 274, 168]], mx: 700, my: 300 }
+      ],
+
+      draw: function (p, thermal, active) {
+        var L = p.line;
+        var s = '';
+        // Стены, нижняя панель, потолок, пол
+        s += '<rect width="800" height="450" fill="' + p.wall + '"/>' +
+          '<rect x="0" y="300" width="800" height="82" fill="' + p.brick + '"/><path d="M0 300H800" stroke="' + L + '" stroke-width="2"/>';
+        s += '<rect x="-4" y="-4" width="808" height="32" fill="' + p.ceil + '" stroke="' + L + '" stroke-width="3"/>';
+        s += '<rect x="-4" y="382" width="808" height="72" fill="' + p.floor + '" stroke="' + L + '" stroke-width="3"/>';
+        s += '<path d="M0 410H800M0 436H800" stroke="' + p.floorLine + '" stroke-width="3"/>';
+        // Светильник
+        s += '<path d="M640 28v18" stroke="' + L + '" stroke-width="3"/>' +
+          '<path d="M612 60q28-26 56 0z" fill="' + p.lamp + '" stroke="' + L + '" stroke-width="3" stroke-linejoin="round"/>';
+        // Окно: рама, левая створка, форточка (вверху справа), нижнее стекло справа
+        s += '<rect x="226" y="66" width="208" height="200" rx="4" fill="' + p.frame + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<rect x="238" y="78" width="88" height="176" fill="' + p.glass + '" stroke="' + L + '" stroke-width="2"/>' +
+          '<rect x="338" y="146" width="84" height="108" fill="' + p.glass + '" stroke="' + L + '" stroke-width="2"/>';
+        if (active.vent) {
+          // форточка распахнута: в проёме — улица, створка повёрнута внутрь
+          s += '<rect x="338" y="78" width="84" height="58" fill="' + p.outside + '" stroke="' + L + '" stroke-width="2"/>' +
+            '<path d="M338 78L386 90V128L338 136Z" fill="' + p.glass + '" stroke="' + L + '" stroke-width="3" stroke-linejoin="round"/>';
+        } else {
+          s += '<rect x="338" y="78" width="84" height="58" fill="' + p.glass + '" stroke="' + L + '" stroke-width="2"/>';
+        }
+        s += '<path d="M302 160h12M398 200h12" stroke="' + L + '" stroke-width="4" stroke-linecap="round"/>';   // ручки
+        // Подоконник
+        s += '<rect x="214" y="262" width="232" height="14" rx="3" fill="' + p.sill + '" stroke="' + L + '" stroke-width="3"/>';
+        // Батарея
+        var fins = '';
+        for (var i = 1; i < 8; i++) fins += 'M' + (262 + i * 17) + ' 302V356';
+        s += '<rect x="262" y="296" width="136" height="66" rx="8" fill="' + p.radiator + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<path d="' + fins + '" stroke="' + p.radiatorLine + '" stroke-width="3"/>' +
+          '<path d="M270 362v20M390 362v20" stroke="' + L + '" stroke-width="5"/>';
+        // Розетка на наружной стене
+        s += '<rect x="118" y="318" width="26" height="26" rx="5" fill="' + p.socket + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<circle cx="126" cy="331" r="2.5" fill="' + L + '"/><circle cx="136" cy="331" r="2.5" fill="' + L + '"/>';
+        // Картина
+        s += '<rect x="548" y="82" width="128" height="86" rx="4" fill="' + p.frame + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<rect x="558" y="92" width="108" height="66" fill="' + p.picture + '"/>' +
+          '<path d="M558 158L590 122L612 142L630 116L666 158Z" fill="' + p.ceil + '"/>';
+        // Кровать с пациентом
+        s += '<rect x="742" y="214" width="28" height="168" rx="6" fill="' + p.bed + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<rect x="496" y="262" width="16" height="120" rx="5" fill="' + p.bed + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<rect x="506" y="300" width="240" height="40" rx="8" fill="' + p.sill + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<rect x="506" y="338" width="240" height="14" fill="' + p.bed + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<ellipse cx="716" cy="290" rx="30" ry="14" fill="' + p.pillow + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<circle cx="700" cy="272" r="20" fill="' + p.skin + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<path d="M681 266q4-20 22-20q14 0 17 14q-16-6-39 6z" fill="' + p.hair + '" stroke="' + L + '" stroke-width="3" stroke-linejoin="round"/>' +
+          '<path d="M530 292q90-24 150-6q20 6 20 22v32H530z" fill="' + p.blanket + '" stroke="' + L + '" stroke-width="3" stroke-linejoin="round"/>' +
+          '<path d="M600 290q6 20 0 48" stroke="' + L + '" stroke-width="2" fill="none"/>';
+        return s;
+      },
+
+      overlays: function (active) {
+        var T = EB.minigames.thermal;
+        var C = T.COLD;
+        var s = '';
+        if (active.corner) {
+          s += '<path d="M0 28H150Q70 50 52 150L0 176Z" fill="' + C.spot + '" opacity=".8"/>' +
+            T._waves([[36, 40], [72, 44]], 'fall');
+        }
+        if (active.wall) {
+          s += '<ellipse cx="120" cy="184" rx="50" ry="64" fill="' + C.spot + '" opacity=".65"/>' +
+            T._waves([[104, 154], [136, 160]], 'fall');
+        }
+        if (active.frame) {
+          s += '<rect x="226" y="150" width="14" height="112" fill="' + C.spot + '"/>' +
+            T._waves([[214, 164], [214, 204]], 'fall');
+        }
+        if (active.vent) {
+          s += '<rect x="338" y="78" width="84" height="58" fill="' + C.spot + '"/>' +
+            '<path d="M338 78L386 90V128L338 136Z" fill="#2f2380" stroke="#0e0a2a" stroke-width="3" stroke-linejoin="round"/>' +
+            T._waves([[364, 142], [404, 142]], 'fall');
+        }
+        if (active.slope) {
+          s += '<rect x="432" y="68" width="14" height="196" fill="' + C.spot + '"/>' +
+            T._waves([[458, 130], [458, 178]], 'fall');
+        }
+        if (active.sill) {
+          s += '<rect x="214" y="274" width="232" height="10" fill="' + C.spot + '"/>' +
+            T._waves([[310, 288], [390, 288]], 'drift');
+        }
+        if (active.socket) {
+          s += '<circle cx="131" cy="331" r="24" fill="' + C.spot + '" opacity=".85"/>' +
+            T._waves([[184, 324], [184, 342]], 'drift');
+        }
+        return s;
+      }
+    },
+
+    // Вестибюль (приёмный покой): большое окно, входная дверь, лампа, обогреватель, регистратура
+    lobby: {
+      lensStart: [400, 240],
+      leaks: [
+        { id: 'glass',   x: 141, y: 187, r: 60 },   // окно с одним стеклом
+        { id: 'slope',   x: 254, y: 190, r: 30 },   // щель между окном и стеной
+        { id: 'entry',   x: 660, y: 300, r: 62 },   // входная дверь не закрывается
+        { id: 'transom', x: 632, y: 160, r: 40 },   // щель в остеклении над дверью
+        { id: 'heater',  x: 466, y: 340, r: 42 },   // обогреватель работает зря
+        { id: 'bulb',    x: 330, y: 104, r: 36 }    // горячая лампа накаливания
+      ],
+      fine: [
+        { id: 'radiator', rects: [[70, 310, 140, 56]], mx: 140, my: 338 },
+        { id: 'person', rects: [[296, 224, 68, 72]], mx: 330, my: 250 },
+        { id: 'led', rects: [[600, 22, 100, 30]], mx: 650, my: 34 }
+      ],
+
+      draw: function (p, thermal, active) {
+        var L = p.line;
+        var s = '';
+        s += '<rect width="800" height="450" fill="' + p.wall + '"/>' +
+          '<rect x="0" y="300" width="800" height="82" fill="' + p.brick + '"/><path d="M0 300H800" stroke="' + L + '" stroke-width="2"/>';
+        s += '<rect x="-4" y="-4" width="808" height="32" fill="' + p.ceil + '" stroke="' + L + '" stroke-width="3"/>';
+        s += '<rect x="-4" y="382" width="808" height="72" fill="' + p.floor + '" stroke="' + L + '" stroke-width="3"/>';
+        s += '<path d="M0 410H800M0 436H800" stroke="' + p.floorLine + '" stroke-width="3"/>';
+        // Большое окно с подоконником и батареей
+        s += '<rect x="34" y="84" width="212" height="206" rx="4" fill="' + p.frame + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<rect x="46" y="96" width="190" height="182" fill="' + p.glass + '" stroke="' + L + '" stroke-width="2"/>' +
+          '<path d="M141 96V278M46 187H236" stroke="' + p.frame + '" stroke-width="8"/>' +
+          '<path d="M141 96V278M46 187H236" stroke="' + L + '" stroke-width="2"/>' +
+          '<rect x="26" y="288" width="228" height="12" rx="3" fill="' + p.sill + '" stroke="' + L + '" stroke-width="3"/>';
+        var fins = '';
+        for (var i = 1; i < 8; i++) fins += 'M' + (70 + i * 17.5) + ' 316V360';
+        s += '<rect x="70" y="310" width="140" height="56" rx="8" fill="' + p.radiator + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<path d="' + fins + '" stroke="' + p.radiatorLine + '" stroke-width="3"/>' +
+          '<path d="M78 366v16M202 366v16" stroke="' + L + '" stroke-width="5"/>';
+        // Лампа на проводе (старая лампа накаливания)
+        s += '<path d="M330 28V74" stroke="' + L + '" stroke-width="3"/>' +
+          '<rect x="322" y="72" width="16" height="13" rx="3" fill="' + p.band + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<path d="M322 85h16c0 4 2 6 6 12c8 10 4 26-14 26c-18 0-22-16-14-26c4-6 6-8 6-12z" fill="' + p.bulb + '" stroke="' + L + '" stroke-width="3" stroke-linejoin="round"/>';
+        // Регистратура: сотрудница за стойкой
+        s += '<path d="M300 300v-20q0-14 14-14h32q14 0 14 14v20z" fill="' + p.shirt + '" stroke="' + L + '" stroke-width="3" stroke-linejoin="round"/>' +
+          '<circle cx="330" cy="248" r="20" fill="' + p.skin + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<path d="M310 246q2-22 20-22t20 22q-6-10-20-10t-20 10z" fill="' + p.hair + '" stroke="' + L + '" stroke-width="3" stroke-linejoin="round"/>' +
+          '<rect x="250" y="290" width="160" height="92" fill="' + p.desk + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<rect x="244" y="282" width="172" height="12" rx="3" fill="' + p.desk + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<path d="M270 312h120M270 336h120" stroke="' + L + '" stroke-width="2" opacity=".4"/>';
+        // Доска объявлений
+        s += '<rect x="430" y="110" width="80" height="90" rx="4" fill="' + p.board + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<path d="M442 128h56M442 144h44M442 160h52M442 176h36" stroke="' + p.band + '" stroke-width="4" stroke-linecap="round"/>';
+        // Масляный обогреватель
+        s += '<rect x="432" y="306" width="68" height="70" rx="10" fill="' + p.heater + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<path d="M446 314v54M460 314v54M474 314v54M488 314v54" stroke="' + p.band + '" stroke-width="3"/>' +
+          '<circle cx="440" cy="380" r="4" fill="' + L + '"/><circle cx="492" cy="380" r="4" fill="' + L + '"/>';
+        // Светодиодная панель под потолком
+        s += '<rect x="610" y="28" width="80" height="12" rx="3" fill="' + p.panel + '" stroke="' + L + '" stroke-width="3"/>';
+        // Входная дверь: рама, остекление сверху, две створки
+        s += '<rect x="540" y="130" width="184" height="252" fill="' + p.frame + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<rect x="550" y="140" width="164" height="44" fill="' + p.glass + '" stroke="' + L + '" stroke-width="2"/>' +
+          '<rect x="550" y="196" width="80" height="186" rx="3" fill="' + p.door + '" stroke="' + L + '" stroke-width="3"/>' +
+          '<rect x="562" y="210" width="56" height="90" rx="3" fill="' + p.glass + '" stroke="' + L + '" stroke-width="2"/>' +
+          '<path d="M622 300v24" stroke="' + L + '" stroke-width="4" stroke-linecap="round"/>';
+        if (active.entry) {
+          // правая створка распахнута — в проёме улица со снегом
+          s += '<rect x="634" y="196" width="80" height="186" fill="' + p.outside + '" stroke="' + L + '" stroke-width="2"/>' +
+            '<path d="M634 362q20-8 40 0t40 0V382H634z" fill="#ffffff" stroke="' + L + '" stroke-width="2"/>' +
+            '<path d="M714 196L742 186V392L714 382Z" fill="' + p.door + '" stroke="' + L + '" stroke-width="3" stroke-linejoin="round"/>';
+        } else {
+          s += '<rect x="634" y="196" width="80" height="186" rx="3" fill="' + p.door + '" stroke="' + L + '" stroke-width="3"/>' +
+            '<rect x="646" y="210" width="56" height="90" rx="3" fill="' + p.glass + '" stroke="' + L + '" stroke-width="2"/>' +
+            '<path d="M642 300v24" stroke="' + L + '" stroke-width="4" stroke-linecap="round"/>';
+        }
+        return s;
+      },
+
+      overlays: function (active) {
+        var T = EB.minigames.thermal;
+        var H = T.HOT, C = T.COLD;
+        var s = '';
+        if (active.glass) {
+          s += '<rect x="46" y="96" width="190" height="182" fill="' + C.spot + '" opacity=".85"/>' +
+            '<path d="M141 96V278M46 187H236" stroke="#0e0a2a" stroke-width="6"/>' +
+            T._waves([[90, 120], [190, 120], [140, 206]], 'fall');
+        }
+        if (active.slope) {
+          s += '<rect x="246" y="82" width="14" height="210" fill="' + C.spot + '"/>' +
+            T._waves([[272, 150], [272, 196]], 'fall');
+        }
+        if (active.entry) {
+          s += '<rect x="634" y="196" width="80" height="186" fill="' + C.spot + '"/>' +
+            '<ellipse cx="620" cy="392" rx="110" ry="16" fill="' + C.spot + '" opacity=".75"/>' +
+            T._waves([[640, 372], [600, 380], [560, 372]], 'drift');
+        }
+        if (active.transom) {
+          s += '<rect x="550" y="140" width="164" height="10" fill="' + C.spot + '"/>' +
+            T._waves([[592, 156], [672, 156]], 'fall');
+        }
+        if (active.heater) {
+          s += T._glow(466, 340, 54, 50) +
+            '<rect x="432" y="306" width="68" height="70" rx="10" fill="' + H.hot + '" stroke="#0e0a2a" stroke-width="3"/>' +
+            '<path d="M446 314v54M460 314v54M474 314v54M488 314v54" stroke="' + H.core + '" stroke-width="4"/>' +
+            T._waves([[448, 296], [484, 296]], 'rise');
+        }
+        if (active.bulb) {
+          s += T._glow(330, 104, 46, 46) +
+            '<path d="M322 85h16c0 4 2 6 6 12c8 10 4 26-14 26c-18 0-22-16-14-26c4-6 6-8 6-12z" fill="' + H.core + '" stroke="#0e0a2a" stroke-width="3" stroke-linejoin="round"/>' +
+            T._waves([[300, 84], [360, 84]], 'rise');
+        }
+        return s;
+      }
     }
   },
 
@@ -221,9 +454,17 @@ EB.minigames.thermal = {
     self._options = options;
     self._finished = false;
     self._doneCalled = false;
-    self._scene = self.SCENES[EB.game && EB.game.levelId] || self.SCENES[self.DEFAULT_SCENE];
+    // Помещение: случайное из списка уровня, но не то же, что в прошлый раз
+    var rooms = self.ROOMS[EB.game && EB.game.levelId] || self.DEFAULT_ROOMS;
+    var choice = rooms.length > 1 ? rooms.filter(function (r) { return r !== self._lastRoom; }) : rooms;
+    self._roomId = EB.utils.shuffle(choice)[0];
+    self._lastRoom = self._roomId;
+    self._scene = self.SCENES[self._roomId];
     self._renderIntro();
   },
+
+  // Название помещения на текущем языке: «подвал», «палата», «вестибюль»
+  _roomName: function () { return EB.t('mg.thermal.room.' + this._roomId); },
 
   stop: function () {
     clearInterval(this._timer);
@@ -240,6 +481,7 @@ EB.minigames.thermal = {
     var self = this;
     self._box.innerHTML =
       '<h2 class="minigame__title">' + EB.t('mg.thermal.title') + '</h2>' +
+      '<p class="minigame__step">' + self._roomName() + '</p>' +
       '<p class="minigame__text">' + EB.t('mg.thermal.rules') + '</p>' +
       self._legendHtml() +
       '<div class="panel__buttons"><button class="btn btn--primary btn--small" data-mg="go">' + EB.t('mg.go') + '</button></div>';
@@ -288,7 +530,7 @@ EB.minigames.thermal = {
     var sc = self._scene;
     var R = self._cfg().lensRadius;
     var H = self.HOT;
-    return '<svg class="thml__svg" viewBox="0 0 ' + self.W + ' ' + self.H + '" preserveAspectRatio="xMidYMid slice" tabindex="0" role="application" aria-label="' + EB.t('mg.thermal.stageLabel') + '">' +
+    return '<svg class="thml__svg" viewBox="0 0 ' + self.W + ' ' + self.H + '" preserveAspectRatio="xMidYMid slice" tabindex="0" role="application" aria-label="' + EB.t('mg.thermal.stageLabel', { room: self._roomName() }) + '">' +
       '<defs>' +
         '<clipPath id="thml-clip"><circle class="thml-clip-c" cx="' + self._lens.x + '" cy="' + self._lens.y + '" r="' + R + '"/></clipPath>' +
         '<radialGradient id="thml-glow"><stop offset="0" stop-color="' + H.core + '"/><stop offset=".45" stop-color="' + H.hot + '"/>' +
@@ -318,7 +560,8 @@ EB.minigames.thermal = {
           '<span class="thml__time" role="timer">' + EB.ui.icon('timer') + '<b></b></span>' +
           self._legendHtml() +
         '</div>' +
-        '<p class="minigame__text thml__rules">' + EB.t('mg.thermal.rulesShort') + '</p>' +
+        // Помещение — в строке правил (в заголовке ему тесно: легенда переносилась бы на вторую строку)
+        '<p class="minigame__text thml__rules"><b>' + self._roomName() + '.</b> ' + EB.t('mg.thermal.rulesShort') + '</p>' +
         '<div class="thml__play">' +
           '<div class="thml__stage">' + self._svg() + '</div>' +
           '<div class="thml__side">' +
