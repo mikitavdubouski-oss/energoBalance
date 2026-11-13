@@ -433,6 +433,11 @@ h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
 .scene { position: relative; flex: 1; min-height: 0; background: #cfe6f7; }
 .zone { position: absolute; inset: 0; display: flex; }
 .scene-svg { width: 100%; height: 100%; display: block; }
+/* Сцена ровно 16:9 по центру зоны. Иначе на телефоне по бокам видны куски рисунка за краем холста 1600×900
+   (холм, деревья): браузер обрезает картинку по краю элемента <svg>, а не по краю холста.
+   cqw/cqh — проценты от размера зоны; старые браузеры их не знают и оставят строку выше. */
+.zone { container-type: size; }
+.scene-svg { width: min(100cqw, 100cqh * 16 / 9); height: min(100cqh, 100cqw * 9 / 16); margin: auto; }
 
 /* Состояния объектов: «проблема» и «в порядке» (см. контракт в js/scenes/*.scene.js) */
 .obj[data-state="problem"] .v-ok { display: none; }

@@ -456,14 +456,14 @@ EB.scenes.agro = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"
     <rect x="1156" y="494" width="16" height="14" rx="3" fill="#4a5a6b" stroke="#2b3a4a" stroke-width="3"/>
     <g class="v-problem">
       <!-- горячая лампа накаливания светит в пустом сарае -->
-      <circle cx="1164" cy="524" r="46" fill="url(#ag-hot)"><animate attributeName="r" values="38;50;38" dur="1.6s" repeatCount="indefinite"/></circle>
-      <path d="M1164 508 c-16 0 -18 14 -12 22 c4 6 4 10 4 12 h16 c0 -2 0 -6 4 -12 c6 -8 4 -22 -12 -22 Z" fill="#ffe08a" stroke="#2b3a4a" stroke-width="3" stroke-linejoin="round"/>
-      <path d="M1158 532 l3 -8 l3 8 l3 -8 l3 8" fill="none" stroke="#ff7b2e" stroke-width="2"/>
-      <path d="M1130 520 h-10 M1198 520 h10 M1140 546 l-8 8 M1188 546 l8 8" stroke="#ff9a3c" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="1164" cy="532" r="46" fill="url(#ag-hot)"><animate attributeName="r" values="38;50;38" dur="1.6s" repeatCount="indefinite"/></circle>
+      <path d="M1156 508 h16 c0 4 2 6 6 12 c8 10 4 26 -14 26 c-18 0 -22 -16 -14 -26 c4 -6 6 -8 6 -12 Z" fill="#ffe08a" stroke="#2b3a4a" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M1158 528 l3 8 l3 -8 l3 8 l3 -8" fill="none" stroke="#ff7b2e" stroke-width="2"/>
+      <path d="M1130 532 h-10 M1198 532 h10 M1140 556 l-8 8 M1188 556 l8 8" stroke="#ff9a3c" stroke-width="4" stroke-linecap="round"/>
     </g>
     <g class="v-ok">
       <!-- светодиодная лампа выключена; на стене — датчик присутствия -->
-      <path d="M1164 508 c-14 0 -16 12 -10 20 c3 5 3 8 3 10 h14 c0 -2 0 -5 3 -10 c6 -8 4 -20 -10 -20 Z" fill="#eef2f6" stroke="#2b3a4a" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M1157 508 h14 c0 3 2 5 5 10 c7 9 4 23 -12 23 c-16 0 -19 -14 -12 -23 c3 -5 5 -7 5 -10 Z" fill="#eef2f6" stroke="#2b3a4a" stroke-width="3" stroke-linejoin="round"/>
       <path d="M1118 470 a10 10 0 0 1 20 0 Z" fill="#ffffff" stroke="#2b3a4a" stroke-width="3" stroke-linejoin="round"/>
       <circle cx="1128" cy="465" r="2.5" fill="#2b3a4a"/>
       <path d="M1142 462 q4 4 0 8 M1147 458 q7 8 0 16" fill="none" stroke="#2b3a4a" stroke-width="2" stroke-linecap="round"/>

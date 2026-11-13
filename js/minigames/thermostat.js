@@ -148,9 +148,16 @@ EB.minigames.thermostat = {
       }
     }
     return '<circle cx="150" cy="150" r="140" fill="#fff" stroke="#2b3a4a" stroke-width="5"/>' + ticks +
-      // Снежинка у минимума и огонёк у максимума — подсказки формой, а не только цветом
-      '<text x="62" y="262" font-size="26" text-anchor="middle">❄</text>' +
-      '<text x="238" y="262" font-size="26" text-anchor="middle">🔥</text>' +
+      // Снежинка у минимума и огонёк у максимума — подсказки формой, а не только цветом.
+      // Рисуем их сами (не эмодзи): так они везде одинаковые и стоят внутри круга, под числами шкалы.
+      '<g transform="translate(112 250)" stroke="#1f7ae0" stroke-linecap="round" fill="none">' +
+        '<path d="M0 -15V15M-13 -7.5L13 7.5M-13 7.5L13 -7.5" stroke-width="3.5"/>' +
+        '<path d="M-4 -12L0 -8L4 -12M-4 12L0 8L4 12M-12.4 -2.5L-6.9 -4L-8.4 -9.5M12.4 2.5L6.9 4L8.4 9.5' +
+        'M-12.4 2.5L-6.9 4L-8.4 9.5M12.4 -2.5L6.9 -4L8.4 -9.5" stroke-width="2.5"/></g>' +
+      '<g transform="translate(188 250)">' +
+        '<path d="M0 -17C6 -9 13 -3 13 5C13 12 7 17 0 17C-7 17 -13 12 -13 5C-13 -1 -9 -5 -6 -9C-5 -4 -3 -2 -1 -1C-2 -7 -2 -12 0 -17Z"' +
+        ' fill="#ff7b2e" stroke="#2b3a4a" stroke-width="3" stroke-linejoin="round"/>' +
+        '<path d="M0 3C3 6 5 8 5 11C5 14 3 15 0 15C-3 15 -5 14 -5 11C-5 8 -2 6 0 3Z" fill="#ffd23f"/></g>' +
       '<g class="thermo__knob"><circle cx="150" cy="150" r="70" fill="#eaf6ff" stroke="#2b3a4a" stroke-width="5"/>' +
       '<rect x="144" y="84" width="12" height="34" rx="6" fill="#1f7ae0" stroke="#2b3a4a" stroke-width="3"/></g>' +
       '<text class="thermo__value" x="150" y="166" text-anchor="middle" font-size="40" font-weight="800" fill="#1d2b3a"></text>';
