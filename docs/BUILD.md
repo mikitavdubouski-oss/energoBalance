@@ -12,13 +12,18 @@
 
 ## Что входит в архив
 
+Только то, что нужно для запуска игры — код и ассеты:
+
 ```
-index.html  demo.html  manifest.webmanifest  README.txt  css/  js/  assets/  docs/
+index.html  demo.html  manifest.webmanifest  css/  js/  assets/
 ```
 
-Не входят служебные файлы разработки: `CLAUDE.md`, `PROJECT-MAP.md`, `docs/PROMPTS.md`, папки `.git`, `.claude`.
-Внутренние рабочие списки (`docs/facts-to-verify.md`, `docs/be-terms-to-check.md`) к моменту сдачи
-должны быть отработаны; их тоже можно исключить — допишите в строку `Remove-Item` ниже.
+**Документация в архив не входит вовсе:** ни папка `docs/` (записка, инструкции, чек-листы, списки на проверку),
+ни `README.txt`, ни `CLAUDE.md`, `PROJECT-MAP.md`, ни файлы `README.*` внутри `assets/`, ни папки `tools`, `.git`, `.claude`.
+Пояснительную записку (`docs/poyasnitelnaya-zapiska.md`, оформленную в Word/PDF) и инструкцию для жюри (`README.txt`)
+сдают **отдельными файлами рядом с архивом**, если их требует положение конкурса.
+
+Внутри игры ссылок на документацию нет: в «Об игре → Источники» написано «Полный список источников — в пояснительной записке».
 
 ## Команда упаковки (Windows PowerShell)
 
@@ -29,15 +34,17 @@ index.html  demo.html  manifest.webmanifest  README.txt  css/  js/  assets/  doc
 $out = "$env:TEMP\energobalans"
 Remove-Item $out -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory $out | Out-Null
-Copy-Item index.html, demo.html, manifest.webmanifest, README.txt, css, js, assets, docs -Destination $out -Recurse
-# 2. Убираем служебные файлы разработки
-Remove-Item "$out\docs\PROMPTS.md"
+Copy-Item index.html, demo.html, manifest.webmanifest, css, js, assets -Destination $out -Recurse
+# 2. Убираем описания внутри assets (README.md / README.txt) — для запуска они не нужны
+Get-ChildItem $out -Recurse -Include README.md, README.txt | Remove-Item
 # 3. Упаковываем
 Remove-Item energobalans.zip -ErrorAction SilentlyContinue
 Compress-Archive -Path "$out\*" -DestinationPath energobalans.zip
 ```
 
 Проверка: распакуйте `energobalans.zip` в другую папку и откройте `index.html` двойным кликом.
+В архиве должны быть только `index.html`, `demo.html`, `manifest.webmanifest` и папки `css`, `js`, `assets` —
+без `.md` и `.txt` файлов.
 
 ## Размер
 

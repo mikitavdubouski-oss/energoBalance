@@ -651,6 +651,19 @@ h3 { font-size: var(--font-size-l); margin: var(--space-m) 0 var(--space-s); }
 .results__cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-l); width: 100%; text-align: left; }
 .results__cols h3 { margin-top: 0; }
 #screen-results .panel { gap: var(--space-s); }
+/* Полоска с кнопками итогов: если итоги длиннее экрана, она прилипает к его низу.
+   Прокручивается сам экран, поэтому у панели итогов своя прокрутка выключена (иначе sticky «держится» за панель). */
+#screen-results .panel--scroll { overflow: visible; }
+.results__bar {
+  position: sticky; bottom: calc(-1 * var(--space-l)); z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-s);
+  width: 100%; padding: var(--space-s) 0;
+  border-top: 3px solid #e3e9ef; background: var(--color-surface);
+}
+.results__bar .muted { margin: 0; }
+/* Полоска прилипает к краю экрана с учётом его отступа (padding у .screen меньше на невысоких экранах) */
+@media (max-height: 800px) { .results__bar { bottom: calc(-1 * var(--space-m)); } }
+@media (max-height: 560px) { .results__bar { bottom: calc(-1 * var(--space-s)); } }
 #screen-results .stars .icon { width: 44px; height: 44px; }
 #screen-results .big-number b { font-size: 28px; }
 

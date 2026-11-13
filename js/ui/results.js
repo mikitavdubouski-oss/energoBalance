@@ -4,8 +4,8 @@
   Итоги уровня: очки, звёзды (1–3, с подписью «2 из 3»), эко-коины,
   процент экономии по каждому ресурсу (с иконкой и подписью), главная фраза обратной связи,
   2–3 персональных совета, случайный факт.
-  Кнопки: Переиграть / Следующий уровень (или «Финал» после последнего) / Меню — стоят сразу под главным итогом
-  (звёзды, очки, монеты), чтобы их было видно без прокрутки; подробности — ниже кнопок.
+  Кнопки: Переиграть / Следующий уровень (или «Финал» после последнего) / Меню — внизу, в полоске,
+  которая «прилипает» к низу экрана (position: sticky): итоги можно листать, а кнопки всегда видны.
 
   Финал (после прохождения всех уровней): подведение итогов по эко-коинам —
   медаль за 1, 2 или 3 место с похвалой, «пьедестал» из трёх мест с отметкой «это ты»,
@@ -56,7 +56,13 @@ EB.ui.results = {
       '</div>' +
       '<p class="results__formula">' + esc(EB.t('results.formula', r.parts)) + '</p>' +
       '<p class="results__summary">' + esc(r.summary) + '</p>' +
-      // Кнопки — сразу под главным итогом, чтобы не листать вниз; подробности (экономия, советы, факт) — ниже
+      '<div class="results__cols">' +
+        '<div><h3>' + EB.t('results.savings') + '</h3><ul class="res-list">' + resources + '</ul></div>' +
+        '<div><h3>' + EB.t('results.tips') + '</h3><ul class="tips">' + tips + '</ul></div>' +
+      '</div>' +
+      '<div class="fact-box" id="results-fact"></div>' +
+      // Кнопки — внизу, в полоске results__bar: она «прилипает» к низу экрана, поэтому видна без прокрутки
+      '<div class="results__bar">' +
       '<div class="panel__buttons">' +
         '<button class="btn btn--small" id="res-replay">' + EB.t('results.replay') + '</button>' +
         (isLast ?
@@ -67,11 +73,7 @@ EB.ui.results = {
       (!nextOpen && !isLast ? '<p class="muted">' + EB.t('results.needStar') + '</p>' : '') +
       // Переиграли уровень хуже, чем раньше: монеты в сумму не прибавились — объясняем почему
       (r.coins > 0 && r.coinsAdded === 0 ? '<p class="muted">' + EB.t('results.coinsBestOnly') + '</p>' : '') +
-      '<div class="results__cols">' +
-        '<div><h3>' + EB.t('results.savings') + '</h3><ul class="res-list">' + resources + '</ul></div>' +
-        '<div><h3>' + EB.t('results.tips') + '</h3><ul class="tips">' + tips + '</ul></div>' +
-      '</div>' +
-      '<div class="fact-box" id="results-fact"></div>';
+      '</div>';
 
     EB.ui.renderFact(document.getElementById('results-fact'), EB.ui.randomFact());
 
